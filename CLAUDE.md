@@ -27,11 +27,17 @@ Database + lucide-react. Deploys on Vercel.
   - `dummyRoom/players`
   - `dummyRoom/groups`
   - `dummyRoom/history`
-- TypeScript models must match the legacy structure exactly:
-  - `Player`: `id`, `name`, `image`, `totalScore`, `latestScore`
-  - `Group`: `id`, `name`, `playerIds`, `scores`
-  - `History`: `id`, `timestamp`, `groupName`, `groupId`, `multiplier`,
-    `playerScores`, `commentary`
+- TypeScript models must match the legacy structure exactly, field names AND
+  types (`src/types/models.ts` is the source of truth):
+  - `Player`: `id: string`, `name: string`, `image: string`,
+    `totalScore: number`, `latestScore: number | null` (null = never scored yet)
+  - `Group`: `id: string`, `name: string`, `playerIds: string[]`,
+    `scores: Record<string, number>` (keyed by player id)
+  - `History` (`HistoryEntry`): `id: string`,
+    `timestamp: string` (ISO 8601 from `new Date().toISOString()`, not epoch),
+    `groupName: string`, `groupId: string`, `multiplier: number`,
+    `playerScores: Record<string, number>` (keyed by player id),
+    `commentary: string`
 - Firebase config is read from `NEXT_PUBLIC_FIREBASE_*` env vars. Real values
   live in `.env.local` (git-ignored); `.env.example` holds placeholders.
 
