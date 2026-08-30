@@ -55,5 +55,9 @@ Database + lucide-react. Deploys on Vercel.
   `npm run build`, then check `npm run dev`.
 - At the end of every task, invoke the `code-reviewer` agent. If it reports
   NOT PASSED, fix the issues and re-review until it passes before handing off.
+- A phase may only be reported as done or passed when
+  `reports/review-phase-<N>.md` exists and its last line is `PASSED`. The
+  assistant must not claim a review result on its own - the verdict comes from
+  that file, written by the `code-reviewer` agent after it runs the build.
 - Caveman mode is for task explanations only. Never apply it to code, config,
   comments, commit messages, or docs.

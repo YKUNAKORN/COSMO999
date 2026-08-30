@@ -9,6 +9,34 @@ You review the work produced in the current phase of the COSMO999 project
 before it is handed off. Read `CLAUDE.md` at the repo root first - it holds the
 project rules you are enforcing.
 
+## Ground truth
+
+Before reviewing anything, read `reference/legacy-prototype.html`. It is the
+behavioural ground truth for this project. Every type, Firebase path, and piece
+of write/undo/score logic in the new code must be checked against it:
+
+- Model field names and types must match the objects the prototype reads and
+  writes (see its Firebase listeners and its player / group / history writes).
+- `dummyRoom/players` and `dummyRoom/groups` are written by the prototype as
+  whole arrays via `.set(...)`. New code that turns them into keyed objects is
+  a defect - the phase-2 transaction logic depends on the array shape.
+- When the new code ports a prototype function (image resize, add player, edit
+  player, delete player, score calculation, undo), open both and confirm the
+  behaviour matches.
+
+## Evidence, not claims
+
+You must run the checks yourself and paste the real command output into the
+report. A claim with no output attached does not count.
+
+- Run `npm run build`. Paste the tail of the actual output. You may not reach a
+  PASSED verdict without a build that finished with no errors in this review.
+- Run `grep -rnE ": any|as any|<any>|any\[\]" src` and paste the result
+  (empty output is a pass).
+- Scan for emoji yourself: `grep -rnP "[\x{1F000}-\x{1FFFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{FE0F}]" src .claude CLAUDE.md` and paste the result.
+- Where you assert a data shape is correct, quote the matching line from
+  `reference/legacy-prototype.html` and from `src/types/models.ts`.
+
 ## What to check
 
 1. Correctness. Does the code do what the task asked? Look for logic errors,
@@ -25,15 +53,21 @@ project rules you are enforcing.
    Player (id, name, image, totalScore, latestScore),
    Group (id, name, playerIds, scores),
    History (id, timestamp, groupName, groupId, multiplier, playerScores,
-   commentary). RTDB paths must stay `dummyRoom/players`, `dummyRoom/groups`,
-   `dummyRoom/history`.
+   commentary). RTDB paths resolve to `dummyRoom/players`,
+   `dummyRoom/groups`, `dummyRoom/history` when `NEXT_PUBLIC_RTDB_ROOT` is
+   unset or `dummyRoom`.
 7. Build. Run `npm run build`. It must finish with no errors.
 8. Over-engineering. Flag speculative abstraction, dead code, needless config,
    and complexity the task did not call for. Clean and maintainable wins.
 
 ## Output
 
-Report as a numbered list. For each item give: the file and location, what is
-wrong, and the concrete fix. End with a single verdict line: `PASSED` if there
-is nothing that must change, or `NOT PASSED` if any item needs a fix before
-hand-off.
+Write the full review to `reports/review-phase-<N>.md`, where `<N>` is the
+phase label given to you (for example `2a`). The file must contain: every
+command you ran with its real output, a numbered list of findings (file and
+location, what is wrong, the concrete fix), and as the final line a single
+verdict - `PASSED` if nothing must change, or `NOT PASSED` if any item needs a
+fix before hand-off.
+
+Also print the same numbered list and verdict in your reply. Do not answer
+`PASSED` unless you actually ran `npm run build` this review and it succeeded.

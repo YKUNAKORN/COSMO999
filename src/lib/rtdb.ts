@@ -1,6 +1,6 @@
-// Read-only Realtime Database layer.
-// Phase 1 scope: subscribe to lists and stream them into React. No writes.
-import { onValue, ref, type DataSnapshot } from "firebase/database";
+// Realtime Database read layer: live list subscriptions plus a one-shot
+// read. Writes live in the per-entity modules (see players.ts).
+import { get, onValue, ref, type DataSnapshot } from "firebase/database";
 import { database } from "./firebase";
 
 // Legacy quirk: dummyRoom/players and dummyRoom/groups were saved as JSON
@@ -40,4 +40,14 @@ export function subscribeToList<T>(
   return onError
     ? onValue(listRef, handleValue, onError)
     : onValue(listRef, handleValue);
+}
+
+/**
+ * Read the list at `path` once and return it normalised the same way
+ * `subscribeToList` normalises snapshots. Used by write helpers that need
+ * the current array before they modify and re-set it.
+ */
+export async function readList<T>(path: string): Promise<T[]> {
+  const snapshot = await get(ref(database, path));
+  return normalizeList<T>(snapshot.val());
 }
