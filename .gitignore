@@ -45,4 +45,4 @@ yarn-error.log*
 next-env.d.ts
 
 #prototype-ignore
-cosmo999-prototype.html
+/reference/legacy-prototype.html
