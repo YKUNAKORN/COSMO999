@@ -5,30 +5,10 @@
 // Writes go straight to src/lib/players; the listener refreshes the list.
 import { useRef, useState } from "react";
 import { Check, Loader2, Pencil, Trash2, X } from "lucide-react";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { fileToResizedDataUrl } from "@/lib/image";
 import { deletePlayer, updatePlayer } from "@/lib/players";
 import type { Player } from "@/types/models";
-
-function Avatar({ player }: { player: Player }) {
-  if (player.image) {
-    return (
-      <span
-        role="img"
-        aria-label={player.name}
-        className="size-11 shrink-0 rounded-full border border-border bg-cover bg-center"
-        style={{ backgroundImage: `url(${player.image})` }}
-      />
-    );
-  }
-  return (
-    <span
-      aria-hidden
-      className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface-raised text-lg font-semibold text-accent"
-    >
-      {player.name.trim().charAt(0) || "?"}
-    </span>
-  );
-}
 
 function PlayerRow({ player }: { player: Player }) {
   const [mode, setMode] = useState<"view" | "edit" | "confirm-delete">("view");
@@ -98,7 +78,7 @@ function PlayerRow({ player }: { player: Player }) {
   return (
     <li className="rounded-lg border border-border bg-surface p-4 shadow-card">
       <div className="flex items-center gap-3">
-        <Avatar player={player} />
+        <PlayerAvatar player={player} />
 
         {mode === "edit" ? (
           <input

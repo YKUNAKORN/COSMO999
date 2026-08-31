@@ -1,22 +1,24 @@
 "use client";
 
-// Player management: create, edit, and delete players. The small badge in
-// the header doubles as the live-connection indicator for the roster.
+// Home: set up a round to play, plus the roster tools for adding, editing,
+// and removing players. The badge in the header doubles as the live
+// connection indicator for the roster.
 import { Loader2, TriangleAlert, Wifi } from "lucide-react";
 import { CreatePlayerForm } from "@/components/CreatePlayerForm";
 import { PlayerList } from "@/components/PlayerList";
+import { RoundSetup } from "@/components/RoundSetup";
 import { usePlayers } from "@/hooks/usePlayers";
 
 export default function HomePage() {
   const { players, loading, error } = usePlayers();
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 px-4 py-10 sm:px-6">
+    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-8 px-4 py-10 sm:px-6">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">จัดการผู้เล่น</h1>
+          <h1 className="text-2xl font-bold tracking-tight">โต๊ะไพ่ดัมมี่</h1>
           <p className="text-sm text-text-muted">
-            เพิ่ม แก้ไข หรือลบผู้เล่นในวง
+            ตั้งค่ารอบแล้วไปกรอกคะแนน
           </p>
         </div>
 
@@ -40,8 +42,19 @@ export default function HomePage() {
         </span>
       </header>
 
-      <CreatePlayerForm />
-      <PlayerList players={players} loading={loading} />
+      <RoundSetup players={players} loading={loading} />
+
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">จัดการผู้เล่น</h2>
+          <p className="text-sm text-text-muted">
+            เพิ่ม แก้ไข หรือลบผู้เล่นในวง
+          </p>
+        </div>
+
+        <CreatePlayerForm />
+        <PlayerList players={players} loading={loading} />
+      </section>
     </main>
   );
 }
