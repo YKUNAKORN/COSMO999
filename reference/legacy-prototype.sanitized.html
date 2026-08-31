@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dummimie</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap');
+
+        :root {
+            /* Theme ธีมไพ่คาสิโน */
+            --primary: #dc2626; 
+            --primary-hover: #b91c1c;
+            --secondary: #111827; 
+            --bg-color: #0d381c; 
+            --card-bg: #ffffff; 
+            --text-main: #1f2937;
+            --success: #15803d;
+            --danger: #dc2626;
+            --gold: #f59e0b;
+            --warning: #f59e0b;
+            --info: #0284c7;
+        }
+
+        * { box-sizing: border-box; font-family: 'Prompt', sans-serif; scroll-behavior: smooth; }
+        
+        body { 
+            background: radial-gradient(circle at 50% 20%, #1e6935 0%, #0a2612 100%); 
+            color: var(--text-main); 
+            padding: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            min-height: 100vh;
+        }
+
+        h1 { 
+            text-align: center; color: #facc15; font-weight: 700; font-size: 2.2rem;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.6); margin-bottom: 25px; letter-spacing: 1px;
+        }
+        
+        .title-emoji { font-size: 0.65em; vertical-align: middle; }
+        
+        h2 { 
+            color: var(--secondary); font-size: 1.2rem; margin-top: 0; 
+            border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; display: flex; align-items: center; gap: 8px;
+        }
+
+        .card, .stat-card { 
+            background: var(--card-bg); padding: 25px; border-radius: 14px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid #e2e8f0;
+            position: relative; margin-bottom: 20px; 
+        }
+
+        .top-stats { display: flex; gap: 20px; margin-bottom: 30px; }
+        @media (max-width: 768px) { .top-stats { flex-direction: column; } }
+        
+        .stat-card { flex: 1; display: flex; align-items: center; gap: 15px; overflow: hidden; padding: 20px; }
+        .stat-card.highest { border-left: 8px solid var(--gold); }
+        .stat-card.lowest { border-left: 8px solid var(--secondary); }
+        .stat-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; background: #cbd5e1; border: 2px solid #e5e7eb; flex-shrink: 0; }
+        .stat-info h3 { margin: 0; font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;}
+        .stat-info p.name { margin: 5px 0 0; font-size: 1.3rem; font-weight: bold; color: var(--secondary); }
+        .stat-info p.score { margin: 0; font-size: 1.2rem; font-weight: bold; }
+        .highest .score { color: var(--success); }
+        .lowest .score { color: var(--danger); }
+        .stat-icon { position: absolute; right: 20px; opacity: 0.4; font-size: 3.5rem; } 
+
+        .main-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.95rem; color: var(--secondary); }
+        input[type="text"], input[type="number"]:not(.score-input-field), select { 
+            width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.3s; 
+        }
+        input:not(.score-input-field):focus, select:focus { border-color: var(--primary); }
+        
+        button { 
+            background-color: var(--secondary); color: white; border: none; padding: 14px 20px; 
+            border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; 
+            transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2); }
+        button:active:not(:disabled) { transform: translateY(0); }
+        button:disabled { cursor: not-allowed; opacity: 0.7; transform: none !important; box-shadow: none !important; }
+
+        .btn-primary { background-color: var(--primary); } 
+        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover:not(:disabled) { background-color: #166534; }
+        .btn-warning { background-color: var(--warning); color: #fff; }
+        .btn-warning:hover:not(:disabled) { background-color: #d97706; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover:not(:disabled) { background-color: #b91c1c; }
+        .btn-info { background-color: var(--info); color: white; }
+        .btn-info:hover:not(:disabled) { background-color: #0369a1; }
+        
+        .action-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .btn-sm { padding: 10px 15px; font-size: 0.9rem; width: auto; box-shadow: none; }
+
+        .player-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
+        .player-item { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; cursor: pointer; border: 2px solid #e2e8f0; transition: 0.2s; }
+        .player-item:hover { background: #f1f5f9; }
+        .player-item.selected { border-color: var(--primary); background: #fef2f2; } 
+        .player-img-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; background: #cbd5e1; flex-shrink: 0; }
+        .player-name-small { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--secondary);}
+
+        .table-responsive { overflow-x: auto; }
+        .leaderboard { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
+        .leaderboard th, .leaderboard td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: middle; font-size: 1rem;}
+        .leaderboard th { background-color: #f8fafc; font-weight: 700; color: var(--secondary); text-transform: uppercase; font-size: 0.85rem; }
+        .leaderboard th:first-child { border-top-left-radius: 8px; }
+        .leaderboard th:last-child { border-top-right-radius: 8px; }
+        .leaderboard tr:hover { background-color: #f8fafc; }
+        
+        .score-pos { color: var(--success); font-weight: bold; }
+        .score-neg { color: var(--danger); font-weight: bold; }
+        
+        .rank-badge { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; font-weight: bold; color: white; }
+        .rank-1 { background-color: var(--gold); box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+        .rank-2 { background-color: #94a3b8; }
+        .rank-3 { background-color: #b45309; }
+        .rank-other { background-color: #e2e8f0; color: #475569; }
+
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
+        .info-card { display: flex; flex-direction: column; align-items: center; padding: 15px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0; }
+        .info-card.positive { background: #f0fdf4; border-color: #bbf7d0; }
+        .info-card.negative { background: #fef2f2; border-color: #fecaca; }
+        .info-card .p-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .info-card .p-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: var(--secondary); }
+        .info-card .p-score { font-size: 1.4rem; font-weight: 700; }
+        .info-card.positive .p-score { color: var(--success); }
+        .info-card.negative .p-score { color: var(--danger); }
+
+        /* Group Item */
+        .group-item { background: #f8fafc; padding: 18px; border-radius: 10px; margin-bottom: 15px; border: 2px solid #e2e8f0; transition: 0.2s; display: flex; flex-direction: column; gap: 12px; }
+        .group-item:hover { border-color: var(--secondary); }
+        .group-name { font-weight: 700; color: var(--secondary); font-size: 1.1rem; margin-bottom: 5px; }
+        .group-members { font-size: 0.85rem; color: #64748b; line-height: 1.4; }
+        .group-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .group-actions-row { display: flex; gap: 10px; width: 100%; }
+        .group-actions-row button { flex: 1; }
+        @media (min-width: 768px) {
+            .group-item { flex-direction: row; align-items: center; justify-content: space-between; }
+            .group-info { flex: 1; }
+            .group-actions { flex-direction: row; width: auto; align-items: center; }
+            .group-actions-row { width: auto; }
+        }
+
+        /* Modals */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; padding: 15px; }
+        .modal.active { display: flex; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { background-color: var(--card-bg); padding: 25px; border-radius: 14px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #e2e8f0; position: relative;}
+        
+        .modal-content.large-modal { max-width: 800px; padding: 20px; }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        .modal-header h2 { margin: 0; border: none; padding: 0; font-size: 1.3rem; display:flex; align-items:center; gap:8px; color: var(--secondary);}
+        .close-btn { background: none; border: none; font-size: 2rem; color: #94a3b8; cursor: pointer; width: auto; padding: 0; box-shadow: none; line-height: 1;}
+        .close-btn:hover { color: var(--danger); background: none; transform: none;}
+        
+        .edit-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap; }
+        .edit-item input[type="text"] { flex: 1; min-width: 150px; }
+        .edit-item input[type="file"] { width: 100%; font-size: 0.8rem; }
+
+        .history-item { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 15px; position: relative;}
+        .history-header { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; font-size: 0.9rem;}
+        .history-time { color: #64748b; }
+        .history-group { font-weight: bold; color: var(--primary); }
+        .history-multi { background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 0.8rem;}
+        .history-scores { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        .history-player-score { text-align: center; padding: 8px; background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.9rem;}
+        
+        #syncStatus { text-align: center; font-size: 0.85rem; color: #a7f3d0; margin-top: -20px; margin-bottom: 25px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+
+        /* Score Input */
+        .score-input-block { background: #f8fafc; padding: 18px 15px; border-radius: 10px; border: 2px solid #e2e8f0; margin-bottom: 15px; transition: all 0.2s ease; }
+        .score-input-block.active-block { border-color: var(--primary); box-shadow: 0 4px 15px rgba(220, 38, 38, 0.15); background: #ffffff; transform: translateY(-2px); }
+        .score-input-name { font-size: 1.15rem; font-weight: 700; color: var(--secondary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;}
+        .score-input-field {
+            width: 100%; text-align: center; font-size: 1.8rem; font-weight: bold; padding: 15px; 
+            border: 2px solid #cbd5e1; border-radius: 8px; color: var(--secondary); background-color: #fff; outline: none; transition: 0.2s;
+        }
+        .score-input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1); }
+
+        /* Preview Modal */
+        .preview-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #e2e8f0; }
+        .preview-row:last-child { border-bottom: none; }
+        .preview-p-name { font-weight: 700; font-size: 1.05rem; }
+        .preview-raw { font-size: 0.85rem; color: #64748b; text-align: right; margin-bottom: 2px;}
+        .preview-net { font-size: 1.15rem; font-weight: 700; text-align: right;}
+        .preview-total-box { background: #f1f5f9; border-radius: 8px; padding: 15px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.15rem; border: 1px solid #cbd5e1;}
+
+        /* Bottom Nav */
+        .bottom-nav {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.1); z-index: 1000; justify-content: space-around; padding: 8px 0; padding-bottom: calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #e2e8f0;
+        }
+        .bottom-nav button { background: transparent; color: #64748b; box-shadow: none; border-radius: 0; padding: 8px 10px; flex-direction: column; gap: 5px; font-size: 0.85rem; transition: 0.2s; }
+        .bottom-nav button:hover, .bottom-nav button:active { background: transparent; color: var(--primary); transform: none;}
+        .bottom-nav .nav-icon { font-size: 1.6rem; }
+        @media (max-width: 768px) { .bottom-nav { display: flex; } body { padding-bottom: 85px; } }
+
+        .recalc-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; margin-left: auto; box-shadow: none; width: auto; color: #94a3b8; }
+        .recalc-btn:hover { background: transparent; transform: rotate(180deg); color: var(--info); box-shadow: none; }
+
+        /* ========================================= */
+        /* 😂 AUTO ROUND COMMENTARY (Quote Style)   */
+        /* ========================================= */
+        .commentary-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 15px 25px; border-radius: 12px; margin-top: 20px; font-weight: 600; color: #b45309; font-size: 1.15rem; font-style: italic;
+            animation: slideUp 0.3s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; line-height: 1.5; position: relative;
+        }
+        .commentary-box::before { content: "“"; font-size: 2rem; color: #f59e0b; opacity: 0.5; position: absolute; left: 10px; top: -5px; }
+        .commentary-box::after { content: "”"; font-size: 2rem; color: #f59e0b; opacity: 0.5; position: absolute; right: 10px; bottom: -15px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ========================================= */
+        /* 📊 MODERN PLAYER STATISTICS DASHBOARD     */
+        /* ========================================= */
+        .stats-profile-header {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+            background: #f8fafc; padding: 20px; border-radius: 14px; border: 1px solid #e2e8f0;
+        }
+        .stats-profile-header img, .stats-profile-header .player-img-small {
+            width: 70px; height: 70px; border-radius: 50%; object-fit: cover; background: #cbd5e1; border: 2px solid #e2e8f0; flex-shrink: 0;
+        }
+        .stats-grid-modern {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px;
+        }
+        .stat-modern-card {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center;
+        }
+        .stat-modern-label { font-size: 0.9rem; color: #64748b; font-weight: 600; margin-bottom: 5px; }
+        .stat-modern-value { font-size: 1.6rem; font-weight: 700; color: var(--secondary); }
+        .val-pos { color: var(--success); }
+        .val-neg { color: var(--danger); }
+
+        .stats-empty-state { text-align: center; padding: 40px 20px; color: #64748b; }
+        .stats-empty-icon { font-size: 4rem; margin-bottom: 15px; opacity: 0.5; }
+        .stats-empty-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 5px; color: var(--secondary); }
+        .stats-empty-subtext { font-size: 0.9rem; }
+
+        .stats-dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .chart-card {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .chart-header {
+            font-size: 1.1rem; font-weight: 700; color: var(--secondary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+        .chart-container {
+            position: relative; width: 100%; height: 320px;
+        }
+        
+        @media (min-width: 768px) {
+            .stats-dashboard-grid { grid-template-columns: 1fr 1fr; }
+            .chart-card.full-width { grid-column: span 2; }
+            .chart-container { height: 350px; }
+        }
+    </style>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+</head>
+<body>
+
+    <h1><span class="title-emoji">♠️ ♥️</span> Dummimie <span class="title-emoji">♣️ ♦️</span></h1>
+    <div id="syncStatus">กำลังเชื่อมต่อฐานข้อมูลโต๊ะไพ่...</div>
+
+    <div class="top-stats" id="topStatsContainer"></div>
+
+    <div class="main-grid">
+        <!-- ฝั่งซ้าย: จัดการเกม -->
+        <div class="left-panel" id="section-play">
+            
+            <div class="card">
+                <h2>🃏 เริ่มเกม (ตั้งค่ารอบ)</h2>
+
+                <label>1. เลือกผู้เล่นในรอบนี้:</label>
+                <div class="player-list" id="roundPlayerSelection"></div>
+                
+                <div class="form-group" style="margin-top: 25px;">
+                    <label for="multiplier">2. ตัวคูณคะแนนรอบนี้:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="multiplier" style="flex: 1; font-weight:bold; font-size: 1.1rem;" onchange="currentRoundIsRandom = false;">
+                            <option value="1">x1 (ปกติ)</option>
+                            <option value="2">x2</option>
+                            <option value="4">x4</option>
+                            <option value="5">x5</option>
+                            <option value="8">x8</option>
+                            <option value="10">x10</option>
+                            <option value="20">x20</option>
+                        </select>
+                        <button onclick="randomMultiplier()" style="width: auto; background-color: var(--gold); box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3); color: black; padding: 12px 20px;">🎲 สุ่ม</button>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="setupScoreInput()" style="margin-top: 10px; padding: 15px; font-size:1.1rem;">➜ ไปกรอกคะแนน</button>
+            </div>
+
+            <!-- หน้าต่างกรอกคะแนน -->
+            <div class="card" id="scoreSection" style="display: none; border: 2px solid var(--primary);">
+                <h2>✍️ กรอกคะแนนดิบจบเกม</h2>
+                <p style="font-size: 13px; color: #6b7280; margin-top: -5px; margin-bottom: 20px;">
+                    *พิมพ์ตัวเลขลงในช่อง (ลบใส่เครื่องหมาย -) กด Enter เพื่อเลื่อนช่องถัดไป
+                </p>
+                <div id="scoreInputs"></div>
+                <button class="btn-info" onclick="showPreview()" style="margin-top: 15px; padding: 15px; font-size: 1.1rem; background: var(--info);">🔍 ตรวจสอบคะแนน</button>
+                <button onclick="cancelScoreInput()" style="margin-top: 15px; background: #e5e7eb; color: #374151; box-shadow: none;">ยกเลิก</button>
+            </div>
+
+            <div class="card">
+                <h2>👤 สร้างโปรไฟล์ผู้เล่นใหม่</h2>
+                <div class="form-group">
+                    <label for="playerName">ชื่อผู้เล่น:</label>
+                    <input type="text" id="playerName" placeholder="กรอกชื่อผู้เล่น">
+                </div>
+                <div class="form-group">
+                    <label for="playerImage">รูปโปรไฟล์ (ไม่บังคับ):</label>
+                    <input type="file" id="playerImage" accept="image/*">
+                </div>
+                <button>+ เพิ่มผู้เล่น</button>
+            </div>
+
+        </div>
+
+        <!-- ฝั่งขวา: ตารางและสรุปผล -->
+        <div class="right-panel">
+            
+            <div class="card" id="latestRoundCard" style="display: none; background: #fafafa; border: 2px solid var(--gold);">
+                <h2>🔔 สรุปคะแนนรอบล่าสุด: <span id="latestGroupName" style="color: var(--primary);"></span></h2>
+                <div class="info-grid" id="latestRoundGrid"></div>
+                
+                <!-- คำแซวอัตโนมัติ -->
+                <div id="latestRoundCommentary"></div>
+                
+                <button class="btn-success" onclick="playLastGroupAgain()" style="margin-top: 20px; padding: 15px; font-size: 1.1rem; background: var(--success); width: 100%;">🔄 เล่นกลุ่มเดิมอีกครั้ง</button>
+            </div>
+
+            <div class="card" id="section-leaderboard">
+                <h2 style="display:flex;">🏆 ตารางคะแนนรวม 
+                    <button class="recalc-btn" onclick="recalculateScoresFromHistory()" title="คำนวณคะแนนใหม่จากประวัติทั้งหมด">🔄</button>
+                </h2>
+                <div class="table-responsive">
+                    <table class="leaderboard">
+                        <thead>
+                            <tr>
+                                <th>อันดับ</th>
+                                <th>ผู้เล่น</th>
+                                <th>คะแนนรวม</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody"></tbody>
+                    </table>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn-primary btn-sm" onclick="openStatsModal()">📊 สถิติผู้เล่น</button>
+                    <button class="btn-info btn-sm" onclick="openHistoryModal()">📜 ประวัติ (Undo)</button>
+                    <button class="btn-warning btn-sm" onclick="openEditModal()">✏️ แก้ไข</button>
+                </div>
+            </div>
+
+            <div class="card" id="section-groups">
+                <h2>👥 ขาประจำ</h2>
+                <div id="groupsContainer"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="bottom-nav">
+        <button onclick="scrollToSection('section-play')"><span class="nav-icon">🃏</span>เล่น</button>
+        <button onclick="scrollToSection('section-leaderboard')"><span class="nav-icon">🏆</span>อันดับ</button>
+        <button onclick="scrollToSection('section-groups')"><span class="nav-icon">👥</span>กลุ่ม</button>
+    </div>
+
+    <!-- 🔐 Preview Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 ตรวจสอบคะแนนรอบนี้</h2>
+                <button class="close-btn" onclick="closePreviewModal()">×</button>
+            </div>
+            <div id="previewContent"></div>
+            <div class="action-buttons" style="justify-content: space-between; margin-top: 25px;">
+                <button id="cancelSaveBtn" class="btn-warning" style="width: 48%; padding: 14px 0;" onclick="closePreviewModal()">✏️ กลับไปแก้</button>
+                <button id="confirmSaveBtn" class="btn-success" style="width: 48%; padding: 14px 0;" onclick="confirmAndSaveRound()">✓ ยืนยันและบันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 Modern Player Statistics Modal (DASHBOARD) -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>📊 สถิติผู้เล่น</h2>
+                <button class="close-btn" onclick="closeStatsModal()">×</button>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <select id="statsPlayerSelect" onchange="renderPlayerStats(this.value)" style="font-weight: bold; font-size: 1.1rem; color: var(--primary); padding: 14px;">
+                    <option value="">👤 เลือกผู้เล่นเพื่อดูสถิติ...</option>
+                </select>
+            </div>
+
+            <!-- Empty State -->
+            <div id="statsEmptyState" class="stats-empty-state" style="display: none;">
+                <div class="stats-empty-icon">📊</div>
+                <div class="stats-empty-text">ยังไม่มีข้อมูลการเล่นของผู้เล่นคนนี้</div>
+                <div class="stats-empty-subtext">เมื่อเล่นเกมแล้ว สถิติและกราฟจะแสดงที่นี่</div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="statsContent" style="display:none;">
+                
+                <!-- Profile Header -->
+                <div id="statsProfileHeader"></div>
+
+                <!-- Modern Stats Grid -->
+                <div id="statsGrid" class="stats-grid-modern"></div>
+
+                <!-- Charts Grid -->
+                <div class="stats-dashboard-grid">
+                    <!-- Chart 1: Round Scores -->
+                    <div class="chart-card full-width">
+                        <div class="chart-header">📈 คะแนนแต่ละรอบ</div>
+                        <div class="chart-container">
+                            <canvas id="chartRoundScores"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Cumulative Scores -->
+                    <div class="chart-card full-width">
+                        <div class="chart-header">📊 คะแนนสะสม</div>
+                        <div class="chart-container">
+                            <canvas id="chartCumulative"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Player Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ จัดการผู้เล่น</h2>
+                <button class="close-btn" onclick="closeEditModal()">×</button>
+            </div>
+            <div id="editPlayerList"></div>
+        </div>
+    </div>
+
+    <!-- Group Score Modal -->
+    <div id="groupScoreModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="groupScoreModalTitle">📊 คะแนนรวมกลุ่ม</h2>
+                <button class="close-btn" onclick="closeGroupScoreModal()">×</button>
+            </div>
+            <div class="table-responsive">
+                <table class="leaderboard">
+                    <thead><tr><th>อันดับ</th><th>ผู้เล่น</th><th>คะแนนเฉพาะกลุ่มนี้</th></tr></thead>
+                    <tbody id="groupScoreBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📜 ประวัติการเล่นล่าสุด</h2>
+                <button class="close-btn" onclick="closeHistoryModal()">×</button>
+            </div>
+            <div id="historyContainer" style="max-height: 60vh; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // XSS Protection
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "REDACTED",
+            authDomain: "REDACTED.firebaseapp.com",
+            databaseURL: "https://REDACTED.firebaseio.com",
+            projectId: "REDACTED",
+            storageBucket: "REDACTED.firebasestorage.app",
+            messagingSenderId: "REDACTED",
+            appId: "REDACTED",
+            measurementId: "REDACTED"
+        };
+
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+        const playersRef = db.ref('dummyRoom/players');
+        const groupsRef = db.ref('dummyRoom/groups');
+        const historyRef = db.ref('dummyRoom/history'); 
+
+        let players = [];
+        let groups = [];
+        let matchHistory = []; 
+        let selectedPlayerIds = [];
+        let lastPlayedGroupIds = []; 
+
+        let tempMultiplier = 1;
+        let tempRawScores = {};
+        let tempNetScores = {};
+        let tempTotalNetScore = 0;
+        let tempHasPositive = false;
+        let currentRoundIsRandom = false; 
+
+        // Chart.js Instances
+        let chartRoundScoresInstance = null;
+        let chartCumulativeInstance = null;
+
+        // Register ChartDataLabels plugin globally
+        Chart.register(ChartDataLabels);
+
+        // Firebase Listeners
+        playersRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            players = data ? Object.values(data) : [];
+            updateSyncStatus();
+            renderUI();
+        });
+
+        groupsRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            groups = data ? Object.values(data) : [];
+            renderUI();
+        });
+
+        historyRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            matchHistory = data ? Object.values(data) : [];
+            if(document.getElementById('historyModal').classList.contains('active')) {
+                renderHistoryList();
+            }
+            renderLatestRoundInfo();
+            
+            // Re-render Dynamic Dashboard if modal is open
+            const statsModal = document.getElementById('statsModal');
+            const selectEl = document.getElementById('statsPlayerSelect');
+            if (statsModal.classList.contains('active') && selectEl.value) {
+                renderPlayerStats(selectEl.value);
+            }
+        });
+
+        function updateSyncStatus() {
+            document.getElementById('syncStatus').innerHTML = '🟢 เชื่อมต่อข้อมูลสำเร็จ (อัปเดตล่าสุด: ' + new Date().toLocaleTimeString() + ')';
+        }
+
+        function saveData() { playersRef.set(players); }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function getBase64Image(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 150; const MAX_HEIGHT = 150;
+                    let width = img.width; let height = img.height;
+                    if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                    else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', 0.6));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        const addBtn = Array.from(document.querySelectorAll('button')).find(el => el.textContent === '+ เพิ่มผู้เล่น');
+        if(addBtn) addBtn.onclick = addPlayer;
+
+        function addPlayer() {
+            const nameInput = document.getElementById('playerName');
+            const fileInput = document.getElementById('playerImage');
+            const name = nameInput.value.trim();
+            if (!name) return alert('กรุณากรอกชื่อผู้เล่น');
+
+            const newPlayer = { id: Date.now().toString(), name: name, image: '', totalScore: 0, latestScore: null };
+            if (fileInput.files.length > 0) {
+                getBase64Image(fileInput.files[0], function(base64Data) {
+                    newPlayer.image = base64Data;
+                    players.push(newPlayer); saveData();
+                });
+            } else {
+                players.push(newPlayer); saveData();
+            }
+            nameInput.value = ''; fileInput.value = '';
+        }
+
+        function togglePlayerSelection(id) {
+            const index = selectedPlayerIds.indexOf(id);
+            if (index > -1) selectedPlayerIds.splice(index, 1);
+            else selectedPlayerIds.push(id);
+            renderRoundSelection();
+        }
+
+        function randomMultiplier() {
+            const multipliers = [1, 2, 4, 5, 8, 10, 20];
+            const randomIndex = Math.floor(Math.random() * multipliers.length);
+            const selectEl = document.getElementById('multiplier');
+            selectEl.value = multipliers[randomIndex];
+            selectEl.style.boxShadow = "0 0 0 4px var(--gold)";
+            setTimeout(() => { selectEl.style.boxShadow = "none"; }, 400);
+            currentRoundIsRandom = true; 
+        }
+
+        function renderRoundSelection() {
+            const container = document.getElementById('roundPlayerSelection');
+            container.innerHTML = '';
+            if (players.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280; width: 100%; font-size: 0.9rem;">ยังไม่มีผู้เล่น กรุณาสร้างโปรไฟล์ก่อน</p>';
+                return;
+            }
+            players.forEach(p => {
+                const isSelected = selectedPlayerIds.includes(p.id);
+                const div = document.createElement('div');
+                div.className = `player-item ${isSelected ? 'selected' : ''}`;
+                div.onclick = () => togglePlayerSelection(p.id);
+                const imgStr = p.image ? `<img src="${escapeHTML(p.image)}" class="player-img-small">` : `<div class="player-img-small"></div>`;
+                div.innerHTML = `${imgStr} <span class="player-name-small">${escapeHTML(p.name)}</span>`;
+                container.appendChild(div);
+            });
+        }
+
+        function playLastGroupAgain() {
+            if(lastPlayedGroupIds.length < 2) return;
+            const validIds = lastPlayedGroupIds.filter(id => players.some(p => p.id === id));
+            if (validIds.length < 2) return alert('สมาชิกกลุ่มเดิมไม่ครบหรือเหลือน้อยกว่า 2 คน');
+            
+            selectedPlayerIds = [...validIds];
+            
+            const lastWasRandom = localStorage.getItem('dummimie_lastWasRandom') === 'true';
+            const lastMultiplier = localStorage.getItem('dummimie_lastMultiplier');
+
+            if (lastWasRandom) {
+                randomMultiplier(); 
+            } else if (lastMultiplier) {
+                document.getElementById('multiplier').value = lastMultiplier;
+                currentRoundIsRandom = false;
+            } else {
+                document.getElementById('multiplier').value = "1";
+                currentRoundIsRandom = false;
+            }
+
+            renderRoundSelection();
+            scrollToSection('section-play');
+            setupScoreInput();
+        }
+
+        function playThisGroup(groupId) {
+            const group = groups.find(g => g.id === groupId);
+            if(group) {
+                selectedPlayerIds = group.playerIds.filter(id => players.some(p => p.id === id));
+                if (selectedPlayerIds.length < 2) return alert('สมาชิกของกลุ่มนี้เหลือน้อยกว่า 2 คน ไม่สามารถเริ่มเกมได้');
+                document.getElementById('multiplier').value = "1";
+                renderRoundSelection();
+                scrollToSection('section-play');
+                setupScoreInput();
+            }
+        }
+
+        function setupScoreInput() {
+            if (selectedPlayerIds.length < 2) return alert('ต้องมีผู้เล่นอย่างน้อย 2 คนขึ้นไปเพื่อคำนวณผลต่างครับ');
+            const scoreSection = document.getElementById('scoreSection');
+            const inputsContainer = document.getElementById('scoreInputs');
+            inputsContainer.innerHTML = '';
+            
+            selectedPlayerIds.forEach((id, index) => {
+                const player = players.find(p => p.id === id);
+                if(player) {
+                    const block = document.createElement('div');
+                    block.className = 'score-input-block';
+                    
+                    const imgStr = player.image ? `<img src="${escapeHTML(player.image)}" class="player-img-small" style="width:30px;height:30px;">` : `<div class="player-img-small" style="width:30px;height:30px;"></div>`;
+                    
+                    block.innerHTML = `
+                        <div class="score-input-name">${imgStr} ${escapeHTML(player.name)}</div>
+                        <input type="number" id="score_${id}" class="score-input-field" placeholder="0">
+                    `;
+                    inputsContainer.appendChild(block);
+
+                    const inputEl = block.querySelector(`#score_${id}`);
+                    
+                    inputEl.addEventListener('focus', () => {
+                        document.querySelectorAll('.score-input-block').forEach(b => b.classList.remove('active-block'));
+                        block.classList.add('active-block');
+                    });
+                    inputEl.addEventListener('blur', () => { block.classList.remove('active-block'); });
+                    
+                    inputEl.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const nextId = selectedPlayerIds[index + 1];
+                            if (nextId) document.getElementById(`score_${nextId}`).focus();
+                            else inputEl.blur();
+                        }
+                    });
+                }
+            });
+            
+            scoreSection.style.display = 'block';
+            setTimeout(() => {
+                scoreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (selectedPlayerIds.length > 0) {
+                    const firstInput = document.getElementById(`score_${selectedPlayerIds[0]}`);
+                    if(firstInput) firstInput.focus();
+                }
+            }, 300);
+        }
+
+        function cancelScoreInput() { document.getElementById('scoreSection').style.display = 'none'; }
+
+        function calculateRoundScores(pIds, rawScoresObj, multi) {
+            let nScores = {};
+            let tScore = 0;
+            let hasPos = false;
+
+            pIds.forEach(id1 => {
+                let sumDifference = 0;
+                pIds.forEach(id2 => {
+                    if (id1 !== id2) sumDifference += ((rawScoresObj[id1] || 0) - (rawScoresObj[id2] || 0));
+                });
+                let fScore = sumDifference * multi;
+                nScores[id1] = fScore;
+                tScore += fScore;
+                if (fScore > 0) hasPos = true;
+            });
+            return { netScores: nScores, totalNetScore: tScore, hasPositive: hasPos };
+        }
+
+        function showPreview() {
+            if (selectedPlayerIds.length < 2) return alert('ต้องมีผู้เล่นอย่างน้อย 2 คน');
+            
+            tempMultiplier = parseInt(document.getElementById('multiplier').value);
+            tempRawScores = {};
+            selectedPlayerIds.forEach(id => {
+                const input = document.getElementById(`score_${id}`);
+                tempRawScores[id] = input ? (parseInt(input.value) || 0) : 0; 
+            });
+
+            const result = calculateRoundScores(selectedPlayerIds, tempRawScores, tempMultiplier);
+            tempNetScores = result.netScores;
+            tempTotalNetScore = result.totalNetScore;
+            tempHasPositive = result.hasPositive;
+
+            if (tempTotalNetScore !== 0) {
+                alert(`เกิดข้อผิดพลาด: ผลรวมคะแนนสุทธิไม่เท่ากับ 0 (รวมได้ ${tempTotalNetScore})\nกรุณาตรวจสอบคะแนนใหม่`);
+                return;
+            }
+
+            const content = document.getElementById('previewContent');
+            let html = `<div style="text-align:center; font-weight:700; color:var(--primary); font-size:1.2rem; margin-bottom:15px; background: #fef2f2; padding:8px; border-radius:8px;">ตัวคูณ: x${tempMultiplier}</div>`;
+            
+            selectedPlayerIds.forEach(id => {
+                const p = players.find(x => x.id === id);
+                const net = tempNetScores[id];
+                const colorClass = net > 0 ? 'var(--success)' : (net < 0 ? 'var(--danger)' : '#64748b');
+                const sign = net > 0 ? '+' : '';
+
+                html += `
+                <div class="preview-row">
+                    <div class="preview-p-name">👤 ${p ? escapeHTML(p.name) : '(ไม่ทราบ)'}</div>
+                    <div>
+                        <div class="preview-raw">ดิบ: ${tempRawScores[id]}</div>
+                        <div class="preview-net" style="color: ${colorClass};">สุทธิ: ${sign}${net}</div>
+                    </div>
+                </div>`;
+            });
+
+            html += `
+            <div class="preview-total-box">
+                <div>รวมคะแนนสุทธิ</div>
+                <div style="color: ${tempTotalNetScore === 0 ? '#64748b' : 'var(--danger)'};">${tempTotalNetScore}</div>
+            </div>`;
+
+            content.innerHTML = html;
+            document.getElementById('previewModal').classList.add('active');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+
+        // ==========================================
+        // 😂 AUTO ROUND COMMENTARY (ROAST LOSER EDITION)
+        // ==========================================
+        function generateRoundCommentary(scores, multi) {
+            
+            // 🎯 กำหนดโอกาสออกคำแซว (0.0 ถึง 1.0)
+            // 0.3 = โอกาสออก 30% 
+            const ROAST_CHANCE = 0.3; 
+            
+            if (Math.random() > ROAST_CHANCE) {
+                return ""; // ถ้าสุ่มไม่ได้เลขในเกณฑ์ ให้ส่งค่าว่างกลับไป (ซ่อนกล่องคำแซว)
+            }
+
+            let maxScore = -Infinity, minScore = Infinity;
+            let wIds = [], lIds = [];
+            for (const [id, s] of Object.entries(scores)) {
+                if (s > maxScore) maxScore = s;
+                if (s < minScore) minScore = s;
+            }
+            for (const [id, s] of Object.entries(scores)) {
+                if (s === maxScore) wIds.push(id);
+                if (s === minScore) lIds.push(id);
+            }
+
+            const getPName = (id) => {
+                const p = players.find(x => x.id === id);
+                return p ? escapeHTML(p.name) : 'ใครบางคน';
+            };
+
+            let wName = wIds.length > 0 ? getPName(wIds[0]) : '';
+            let lName = lIds.length > 0 ? getPName(lIds[0]) : '';
+
+            let comments = [];
+            let comeback = false;
+            
+            const sortedHist = [...matchHistory].sort((a, b) => b.id - a.id);
+            if (sortedHist.length > 0 && wIds.length > 0) {
+                let prevScore = sortedHist[0].playerScores[wIds[0]];
+                if (prevScore !== undefined && prevScore < 0 && maxScore > 0) comeback = true;
+            }
+
+            // 1. หมวด Comeback (แอบขยี้คนโดนทวงหนี้)
+            if (comeback) {
+                comments.push(`🧟 นึกว่าเสาเข็มทรุดไปแล้ว! ${wName} ดีดตัวกลับมาผงาดเฉย!`);
+                comments.push(`🚑 ตายวงแรกแล้วฟื้นมาแชมป์เฉย! ${wName} คัมแบ็กแบบงงๆ`);
+                comments.push(`🤬 เจ้าหนี้หน้าสั่น! ${wName} พลิกนรกกลับมาทวงทุกบาททุกสตางค์!`);
+                comments.push(`✨ เมื่อกี้แกล้งตายใช่มั้ย? ${wName} ลุกมาฟาดเรียบ!`);
+            }
+
+            // 2. หมวด คนแพ้ (เน้นด่าล้วนๆ ไม่มีอวยคนชนะ)
+            if (minScore <= -100) {
+                comments.push(`🏠 โครงสร้างพังยับ! ${lName} รับน้ำหนักไม่ไหว ถล่มไป ${minScore}!`);
+                comments.push(`🐶 สภาพพพ! ${lName} โดนสับเละ ${minScore} กลับไปขุดดินคราฟต์ของเล่นคนเดียวไป!`);
+                comments.push(`⚰️ เป็นเจ้าภาพงานศพตัวเองหรอ? ${lName} แจกทานไป ${minScore} สาธุชนชื่นชม!`);
+                comments.push(`📱 ยับกว่าทิชชู่เปียก! ${lName} ขิตไป ${minScore} เปิดแอปโอนจ่ายมาซะดีๆ!`);
+                comments.push(`🏧 ตู้ ATM เคลื่อนที่! ${lName} โดนช็อตฟีลไป ${minScore}`);
+            } else if (minScore < 0) {
+                comments.push(`🧱 ฐานรากไม่แน่นก็งี้แหละ! ${lName} ร่วงไป ${minScore}`);
+                comments.push(`🩸 แค่หยอกๆ ใช่มั้ย? ${lName} เลือดซิบไป ${minScore} ถือว่าทำบุญให้เพื่อน`);
+                comments.push(`💸 จ่ายมาซะดีๆ ${lName} โดนไป ${minScore} อย่าเนียนชิ่ง!`);
+                comments.push(`😭 ฝีมือหรือดวงซวย? ${lName} ติดลบไป ${minScore} ร้องไห้ได้นะ ไม่บอกใคร`);
+            }
+
+            if (comments.length === 0) {
+                return "";
+            }
+            
+            return comments[Math.floor(Math.random() * comments.length)];
+        }
+
+        // ==========================================
+        // Firebase Transaction: Save Round
+        // ==========================================
+        function confirmAndSaveRound() {
+            const confirmBtn = document.getElementById('confirmSaveBtn');
+            const cancelBtn = document.getElementById('cancelSaveBtn');
+            
+            if (confirmBtn && confirmBtn.disabled) return;
+            
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = "⏳ กำลังบันทึก...";
+                cancelBtn.disabled = true;
+            }
+
+            if (tempTotalNetScore !== 0) {
+                alert("เกิดข้อผิดพลาด: ผลรวมคะแนนสุทธิไม่สมดุล (Zero-Sum error)");
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = "✓ ยืนยันและบันทึก"; cancelBtn.disabled = false; }
+                return;
+            }
+
+            const roundCommentary = generateRoundCommentary(tempNetScores, tempMultiplier);
+
+            db.ref('dummyRoom').transaction((currentData) => {
+                if (!currentData) return currentData; 
+
+                if (!currentData.players) currentData.players = [];
+                let safePlayers = Array.isArray(currentData.players) ? currentData.players : Object.values(currentData.players);
+
+                selectedPlayerIds.forEach(id => {
+                    const finalScore = tempNetScores[id];
+                    const pIndex = safePlayers.findIndex(p => p && p.id === id);
+                    if (pIndex > -1) {
+                        safePlayers[pIndex].totalScore = (safePlayers[pIndex].totalScore || 0) + finalScore;
+                        safePlayers[pIndex].latestScore = finalScore;
+                    }
+                });
+                currentData.players = safePlayers;
+
+                if (!currentData.groups) currentData.groups = [];
+                let safeGroups = Array.isArray(currentData.groups) ? currentData.groups : Object.values(currentData.groups);
+
+                const currentIds = [...selectedPlayerIds].sort();
+                const groupIdStr = currentIds.join('_');
+                let gIndex = safeGroups.findIndex(g => g && g.id === groupIdStr);
+
+                if (gIndex === -1) {
+                    let initialScores = {};
+                    currentIds.forEach(id => initialScores[id] = 0);
+                    const groupNameCombined = currentIds.map(id => {
+                        const p = safePlayers.find(x => x && x.id === id); return p ? p.name : 'Unknown';
+                    }).join(' + ');
+
+                    safeGroups.push({ id: groupIdStr, name: groupNameCombined, playerIds: currentIds, scores: initialScores });
+                    gIndex = safeGroups.length - 1;
+                }
+
+                selectedPlayerIds.forEach(id => {
+                    if (!safeGroups[gIndex].scores) safeGroups[gIndex].scores = {};
+                    safeGroups[gIndex].scores[id] = (safeGroups[gIndex].scores[id] || 0) + tempNetScores[id];
+                });
+                currentData.groups = safeGroups;
+
+                if (!currentData.history) currentData.history = {};
+                const matchId = Date.now().toString();
+                currentData.history[matchId] = {
+                    id: matchId,
+                    timestamp: new Date().toISOString(),
+                    groupName: safeGroups[gIndex].name,
+                    groupId: groupIdStr,
+                    multiplier: tempMultiplier,
+                    playerScores: tempNetScores,
+                    commentary: roundCommentary 
+                };
+
+                return currentData; 
+            }, (error, committed, snapshot) => {
+                if (error || !committed) {
+                    alert("บันทึกไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่\n" + (error ? error.message : ""));
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerHTML = "✓ ยืนยันและบันทึก";
+                        cancelBtn.disabled = false;
+                    }
+                } else {
+                    if (tempHasPositive) {
+                        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 9999 });
+                    }
+                    lastPlayedGroupIds = [...selectedPlayerIds];
+                    
+                    localStorage.setItem('dummimie_lastMultiplier', tempMultiplier);
+                    localStorage.setItem('dummimie_lastWasRandom', currentRoundIsRandom);
+
+                    closePreviewModal();
+                    document.getElementById('scoreSection').style.display = 'none';
+                    selectedPlayerIds = [];
+                    
+                    document.getElementById('multiplier').value = "1";
+                    currentRoundIsRandom = false; 
+
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.innerHTML = "✓ ยืนยันและบันทึก";
+                        cancelBtn.disabled = false;
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // History & Undo (Atomic)
+        // ==========================================
+        function openHistoryModal() {
+            renderHistoryList();
+            document.getElementById('historyModal').classList.add('active');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '';
+            
+            if (matchHistory.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#64748b;">ยังไม่มีประวัติการเล่น</p>';
+                return;
+            }
+
+            const sortedHistory = [...matchHistory].sort((a, b) => b.id - a.id);
+
+            sortedHistory.forEach(log => {
+                const dateObj = new Date(log.timestamp);
+                const timeStr = dateObj.toLocaleDateString('th-TH') + ' ' + dateObj.toLocaleTimeString('th-TH');
+                
+                let scoresHTML = '';
+                for (const [pId, score] of Object.entries(log.playerScores || {})) {
+                    const p = players.find(x => x.id === pId);
+                    const pName = p ? escapeHTML(p.name) : '(ถูกลบ)';
+                    const colorClass = score >= 0 ? 'score-pos' : 'score-neg';
+                    const scoreText = score > 0 ? `+${score}` : score;
+                    scoresHTML += `<div class="history-player-score"><div style="font-weight:600; font-size:0.8rem; margin-bottom:4px;">${pName}</div><div class="${colorClass}">${scoreText}</div></div>`;
+                }
+
+                container.innerHTML += `
+                    <div class="history-item">
+                        <div class="history-header">
+                            <div><span class="history-time">${timeStr}</span> | <span class="history-group">${escapeHTML(log.groupName)}</span></div>
+                            <span class="history-multi">x${log.multiplier}</span>
+                        </div>
+                        <div class="history-scores">${scoresHTML}</div>
+                        <button class="btn-danger btn-sm" style="margin-top:10px; width:100%;" onclick="undoMatch('${log.id}', this)">🗑️ ยกเลิกผลรอบนี้ (Undo)</button>
+                    </div>
+                `;
+            });
+        }
+
+        function undoMatch(matchId, btnElement) {
+            const log = matchHistory.find(m => m.id === matchId);
+            if (!log) return;
+            
+            if (!confirm(`คุณแน่ใจหรือไม่ที่จะยกเลิกผลคะแนนรอบนี้?\n\nคะแนนของรอบนี้จะถูกหักออกจากคะแนนรวมอย่างถูกต้อง`)) return;
+
+            if (btnElement) {
+                btnElement.disabled = true;
+                btnElement.innerHTML = "⏳ กำลังยกเลิก...";
+            }
+
+            db.ref('dummyRoom').transaction((currentData) => {
+                if (!currentData || !currentData.history || !currentData.history[matchId]) {
+                    return undefined; 
+                }
+
+                let safePlayers = Array.isArray(currentData.players) ? currentData.players : Object.values(currentData.players || {});
+                let safeGroups = Array.isArray(currentData.groups) ? currentData.groups : Object.values(currentData.groups || {});
+
+                for (const [pId, scoreToRevert] of Object.entries(log.playerScores || {})) {
+                    const pIndex = safePlayers.findIndex(p => p && p.id === pId);
+                    if (pIndex > -1) {
+                        safePlayers[pIndex].totalScore = (safePlayers[pIndex].totalScore || 0) - scoreToRevert;
+                    }
+                    const gIndex = safeGroups.findIndex(g => g && g.id === log.groupId);
+                    if (gIndex > -1 && safeGroups[gIndex].scores) {
+                        safeGroups[gIndex].scores[pId] = (safeGroups[gIndex].scores[pId] || 0) - scoreToRevert;
+                    }
+                }
+
+                delete currentData.history[matchId];
+                currentData.players = safePlayers;
+                currentData.groups = safeGroups;
+
+                return currentData;
+            }, (error, committed) => {
+                if (error || !committed) {
+                    alert("Undo ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่\n" + (error ? error.message : ""));
+                    if (btnElement) {
+                        btnElement.disabled = false;
+                        btnElement.innerHTML = "🗑️ ยกเลิกผลรอบนี้ (Undo)";
+                    }
+                } else {
+                    alert("✓ ยกเลิกรอบเรียบร้อย");
+                }
+            });
+        }
+
+        function recalculateScoresFromHistory() {
+            if (!confirm("⚠️ ต้องการคำนวณคะแนนรวมใหม่จากประวัติทั้งหมดหรือไม่?\n(ระบบจะคำนวณผลรวมใหม่ทั้งหมดให้ตรงกับประวัติอย่างแม่นยำ)")) return;
+
+            let newPlayers = JSON.parse(JSON.stringify(players));
+            let newGroups = JSON.parse(JSON.stringify(groups));
+
+            newPlayers.forEach(p => { p.totalScore = 0; p.latestScore = null; });
+            newGroups.forEach(g => {
+                if(g.scores) { Object.keys(g.scores).forEach(k => g.scores[k] = 0); }
+            });
+
+            matchHistory.forEach(log => {
+                for(const [pId, score] of Object.entries(log.playerScores || {})) {
+                    let p = newPlayers.find(x => x.id === pId);
+                    if(p) p.totalScore += score;
+                    
+                    let g = newGroups.find(x => x.id === log.groupId);
+                    if(g && g.scores) g.scores[pId] = (g.scores[pId] || 0) + score;
+                }
+            });
+
+            const updates = {};
+            updates['dummyRoom/players'] = newPlayers;
+            updates['dummyRoom/groups'] = newGroups;
+
+            db.ref().update(updates).then(() => {
+                alert("✓ คำนวณคะแนนใหม่สำเร็จ");
+            }).catch(e => {
+                alert("เกิดข้อผิดพลาดในการคำนวณใหม่: " + e.message);
+            });
+        }
+
+        function getScoreColorClass(score) {
+            if (score === null || score === undefined) return 'score-neutral';
+            return score >= 0 ? 'score-pos' : 'score-neg';
+        }
+
+        function renderLatestRoundInfo() {
+            const container = document.getElementById('latestRoundCard');
+            const grid = document.getElementById('latestRoundGrid');
+            const nameLabel = document.getElementById('latestGroupName');
+            const commentaryBox = document.getElementById('latestRoundCommentary');
+            
+            const sortedHistory = [...matchHistory].sort((a, b) => b.id - a.id);
+            const latestMatch = sortedHistory.length > 0 ? sortedHistory[0] : null;
+            
+            if (!latestMatch) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            grid.innerHTML = '';
+            nameLabel.innerText = escapeHTML(latestMatch.groupName);
+
+            for (const [pId, score] of Object.entries(latestMatch.playerScores || {})) {
+                const p = players.find(x => x.id === pId);
+                const pName = p ? escapeHTML(p.name) : '(ถูกลบ)';
+                const imgStr = p && p.image ? `<img src="${escapeHTML(p.image)}" class="p-img">` : `<div class="p-img" style="background:#cbd5e1;"></div>`;
+                
+                const isPos = score >= 0;
+                const cardClass = isPos ? 'positive' : 'negative';
+                const scoreDisplay = isPos ? `+${score}` : score;
+                
+                grid.innerHTML += `
+                    <div class="info-card ${cardClass}">
+                        ${imgStr}
+                        <div class="p-name">${pName}</div>
+                        <div class="p-score">${scoreDisplay}</div>
+                    </div>
+                `;
+            }
+
+            if (latestMatch.commentary && latestMatch.commentary.trim() !== "") {
+                commentaryBox.innerHTML = `<div class="commentary-box">${escapeHTML(latestMatch.commentary)}</div>`;
+            } else {
+                commentaryBox.innerHTML = '';
+            }
+        }
+
+        // ==========================================
+        // 📊 MODERN PLAYER STATISTICS DASHBOARD
+        // ==========================================
+        function openStatsModal() {
+            const select = document.getElementById('statsPlayerSelect');
+            select.innerHTML = '<option value="">👤 เลือกผู้เล่นเพื่อดูสถิติ...</option>';
+            players.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${escapeHTML(p.name)}</option>`;
+            });
+            document.getElementById('statsModal').classList.add('active');
+            
+            document.getElementById('statsContent').style.display = 'none';
+            document.getElementById('statsEmptyState').style.display = 'none';
+        }
+
+        function closeStatsModal() {
+            document.getElementById('statsModal').classList.remove('active');
+            destroyCharts();
+        }
+
+        function destroyCharts() {
+            if (chartRoundScoresInstance) { chartRoundScoresInstance.destroy(); chartRoundScoresInstance = null; }
+            if (chartCumulativeInstance) { chartCumulativeInstance.destroy(); chartCumulativeInstance = null; }
+        }
+
+        function renderPlayerStats(playerId) {
+            destroyCharts(); 
+            const content = document.getElementById('statsContent');
+            const emptyState = document.getElementById('statsEmptyState');
+            
+            if (!playerId) {
+                content.style.display = 'none';
+                emptyState.style.display = 'none';
+                return;
+            }
+
+            const pHistory = [...matchHistory]
+                .filter(m => m.playerScores && m.playerScores[playerId] !== undefined)
+                .sort((a, b) => Number(a.id) - Number(b.id));
+
+            if (pHistory.length === 0) {
+                content.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            content.style.display = 'block';
+
+            const player = players.find(p => p.id === playerId);
+            const playerName = player ? escapeHTML(player.name) : 'ผู้เล่น';
+            const imgStr = player && player.image ? `<img src="${escapeHTML(player.image)}">` : `<div class="player-img-small"></div>`;
+            
+            let totalRounds = pHistory.length;
+            let bestRound = -Infinity;
+            let worstRound = Infinity;
+            let wins = 0, losses = 0, zeros = 0;
+            let totalScoreHistory = 0; 
+            let fullCumulative = [];
+
+            pHistory.forEach(m => {
+                const s = m.playerScores[playerId];
+                totalScoreHistory += s;
+                fullCumulative.push(totalScoreHistory);
+
+                if (s > bestRound) bestRound = s;
+                if (s < worstRound) worstRound = s;
+
+                if (s > 0) wins++;
+                else if (s < 0) losses++;
+                else zeros++;
+            });
+
+            // คำนวณ Win Rate จากประวัติ
+            let winRate = 0;
+            if (wins + losses > 0) {
+                winRate = (wins / (wins + losses)) * 100;
+            }
+            
+            bestRound = bestRound === -Infinity ? 0 : bestRound;
+            worstRound = worstRound === Infinity ? 0 : worstRound;
+            
+            // แสดง Profile Header
+            const profileHtml = `
+                <div class="stats-profile-header">
+                    ${imgStr}
+                    <div>
+                        <div style="font-size: 0.9rem; color: #64748b;">👤 Profile</div>
+                        <div style="font-size: 1.4rem; font-weight: bold; color: var(--secondary);">${playerName}</div>
+                        <div style="font-size: 1.1rem; font-weight: bold;" class="${totalScoreHistory > 0 ? 'val-pos' : (totalScoreHistory < 0 ? 'val-neg' : '')}">${totalScoreHistory > 0 ? '+'+totalScoreHistory : totalScoreHistory} คะแนน</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('statsProfileHeader').innerHTML = profileHtml;
+
+            // แสดง Grid Dashboard สถิติ
+            const gridHtml = `
+                <div class="stat-modern-card">
+                    <div class="stat-modern-label">🏆 Win Rate</div>
+                    <div class="stat-modern-value" style="color: var(--info);">${winRate.toFixed(1)}%</div>
+                </div>
+                <div class="stat-modern-card">
+                    <div class="stat-modern-label">🎮 จำนวนเกม</div>
+                    <div class="stat-modern-value">${totalRounds}</div>
+                </div>
+                <div class="stat-modern-card">
+                    <div class="stat-modern-label">📉 ต่ำสุดที่เคยเล่น</div>
+                    <div class="stat-modern-value val-neg">${worstRound}</div>
+                </div>
+                <div class="stat-modern-card">
+                    <div class="stat-modern-label">📈 สูงสุดที่เคยเล่น</div>
+                    <div class="stat-modern-value val-pos">${bestRound > 0 ? '+'+bestRound : bestRound}</div>
+                </div>
+            `;
+            document.getElementById('statsGrid').innerHTML = gridHtml;
+
+            // =====================================
+            // Charts (จำกัด 10 เกมล่าสุด)
+            // =====================================
+            const dataLabelsConfig = {
+                font: { family: 'Prompt', weight: 'bold', size: 10 },
+                formatter: (val) => val > 0 ? '+' + val : val,
+                clip: false 
+            };
+
+            const startIndex = Math.max(0, pHistory.length - 10);
+            const slicedHistory = pHistory.slice(startIndex);
+            const slicedCumulative = fullCumulative.slice(startIndex);
+
+            let labels = [];
+            let roundScoresData = [];
+            let cumulativeData = []; 
+            let cumulativeLabels = [];
+
+            if (startIndex > 0) {
+                cumulativeData.push(fullCumulative[startIndex - 1]);
+                cumulativeLabels.push(`ก่อนหน้า`);
+            } else {
+                cumulativeData.push(0);
+                cumulativeLabels.push(`เริ่มต้น`);
+            }
+
+            slicedHistory.forEach((m, index) => {
+                const globalIndex = startIndex + index + 1;
+                labels.push(`R${globalIndex}`);
+                cumulativeLabels.push(`R${globalIndex}`);
+                roundScoresData.push(m.playerScores[playerId]);
+                cumulativeData.push(slicedCumulative[index]);
+            });
+
+            const roundColors = roundScoresData.map(val => val > 0 ? '#10b981' : (val < 0 ? '#ef4444' : '#94a3b8'));
+            
+            // 1. กราฟคะแนนแต่ละรอบ
+            const ctxRound = document.getElementById('chartRoundScores').getContext('2d');
+            chartRoundScoresInstance = new Chart(ctxRound, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'คะแนน',
+                        data: roundScoresData,
+                        borderColor: '#cbd5e1',
+                        borderWidth: 2,
+                        pointBackgroundColor: roundColors,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 25, bottom: 25 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }, 
+                        datalabels: {
+                            ...dataLabelsConfig,
+                            color: (ctx) => {
+                                const val = ctx.dataset.data[ctx.dataIndex];
+                                return val > 0 ? '#15803d' : (val < 0 ? '#b91c1c' : '#475569');
+                            },
+                            align: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 0 ? 'top' : 'bottom',
+                            offset: 6
+                        }
+                    },
+                    scales: {
+                        y: { grid: { color: '#f1f5f9' }, ticks: { display: false } }, 
+                        x: { grid: { display: false }, ticks: { font: { family: 'Prompt' }, color: '#64748b' } }
+                    }
+                }
+            });
+
+            // 2. กราฟคะแนนสะสม
+            const ctxCum = document.getElementById('chartCumulative').getContext('2d');
+            let gradientCum = ctxCum.createLinearGradient(0, 0, 0, 300);
+            const currentHistoryTotal = fullCumulative[fullCumulative.length - 1]; 
+            if (currentHistoryTotal >= 0) {
+                gradientCum.addColorStop(0, 'rgba(16, 185, 129, 0.4)'); 
+                gradientCum.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+            } else {
+                gradientCum.addColorStop(0, 'rgba(239, 68, 68, 0.4)');  
+                gradientCum.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+            }
+
+            chartCumulativeInstance = new Chart(ctxCum, {
+                type: 'line',
+                data: {
+                    labels: cumulativeLabels,
+                    datasets: [{
+                        label: 'สะสม',
+                        data: cumulativeData,
+                        borderColor: currentHistoryTotal >= 0 ? '#10b981' : '#ef4444',
+                        backgroundColor: gradientCum,
+                        borderWidth: 3,
+                        fill: true,
+                        pointBackgroundColor: '#f59e0b', 
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 25, bottom: 25 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                        datalabels: {
+                            ...dataLabelsConfig,
+                            color: '#1f2937',
+                            align: (ctx) => {
+                                const i = ctx.dataIndex;
+                                const val = ctx.dataset.data[i];
+                                const prev = i > 0 ? ctx.dataset.data[i-1] : 0;
+                                return val >= prev ? 'top' : 'bottom';
+                            },
+                            offset: 6
+                        }
+                    },
+                    scales: {
+                        y: { grid: { color: '#f1f5f9' }, ticks: { display: false } },
+                        x: { grid: { display: false }, ticks: { font: { family: 'Prompt' }, color: '#64748b', maxTicksLimit: 10 } }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // Leaderboard & Table Rendering
+        // ==========================================
+        function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+            if (players.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#9ca3af;">ยังไม่มีข้อมูล</td></tr>';
+                return;
+            }
+            const sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
+            sortedPlayers.forEach((p, index) => {
+                const tr = document.createElement('tr');
+                let rankClass = 'rank-other';
+                if (index === 0) rankClass = 'rank-1';
+                else if (index === 1) rankClass = 'rank-2';
+                else if (index === 2) rankClass = 'rank-3';
+
+                const imgStr = p.image ? `<img src="${escapeHTML(p.image)}" style="width:35px;height:35px;border-radius:50%;object-fit:cover; border:1px solid #e5e7eb;">` : `<div style="width:35px;height:35px;border-radius:50%;background:#cbd5e1;display:inline-block; border:1px solid #e5e7eb;"></div>`;
+                
+                tr.innerHTML = `
+                    <td><span class="rank-badge ${rankClass}">${index + 1}</span></td>
+                    <td style="display:flex; align-items:center; gap:10px;">${imgStr} <span style="font-weight:600; color:#1f2937;">${escapeHTML(p.name)}</span></td>
+                    <td class="${getScoreColorClass(p.totalScore)}" style="font-size:1.1rem;">${p.totalScore > 0 ? '+'+p.totalScore : p.totalScore}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderGroups() {
+            const container = document.getElementById('groupsContainer');
+            container.innerHTML = '';
+            
+            if (groups.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#9ca3af;">ยังไม่มีประวัติขาประจำ</p>';
+                return;
+            }
+
+            groups.forEach(g => {
+                const memberNames = g.playerIds.map(id => {
+                    const p = players.find(x => x.id === id);
+                    return p ? escapeHTML(p.name) : '(ถูกลบ)';
+                }).join(' • ');
+
+                container.innerHTML += `
+                    <div class="group-item">
+                        <div class="group-info">
+                            <div class="group-name">👥 ${escapeHTML(g.name)}</div>
+                            <div class="group-members">สมาชิก<br>${memberNames}</div>
+                        </div>
+                        <div class="group-actions">
+                            <button onclick="playThisGroup('${g.id}')" class="btn-success" style="font-size: 1rem; padding: 12px; width: 100%;">▶️ เล่นกลุ่มนี้</button>
+                            <div class="group-actions-row">
+                                <button onclick="showGroupScore('${g.id}')" class="btn-info" style="font-size: 0.9rem;">📊 ดูคะแนน</button>
+                                <button onclick="editGroup('${g.id}')" class="btn-warning" style="font-size: 0.9rem;">⚙️ แก้ไข</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function showGroupScore(groupId) {
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return;
+            
+            document.getElementById('groupScoreModalTitle').innerText = `📊 คะแนนรวมกลุ่ม: ${escapeHTML(group.name)}`;
+            
+            const tbody = document.getElementById('groupScoreBody');
+            tbody.innerHTML = '';
+            
+            if (!group.scores) {
+                group.scores = {};
+                group.playerIds.forEach(id => group.scores[id] = 0);
+            }
+            
+            const sortedGroupPlayers = group.playerIds.map(id => {
+                const p = players.find(x => x.id === id);
+                return {
+                    id: id,
+                    name: p ? p.name : '(ถูกลบ)',
+                    image: p ? p.image : '',
+                    score: group.scores[id] || 0
+                };
+            }).sort((a, b) => b.score - a.score);
+            
+            sortedGroupPlayers.forEach((p, index) => {
+                const tr = document.createElement('tr');
+                let rankClass = 'rank-other';
+                if (index === 0) rankClass = 'rank-1';
+                else if (index === 1) rankClass = 'rank-2';
+                else if (index === 2) rankClass = 'rank-3';
+                
+                const imgStr = p.image ? `<img src="${escapeHTML(p.image)}" style="width:35px;height:35px;border-radius:50%;object-fit:cover; border:1px solid #e5e7eb;">` : `<div style="width:35px;height:35px;border-radius:50%;background:#cbd5e1;display:inline-block; border:1px solid #e5e7eb;"></div>`;
+                
+                tr.innerHTML = `
+                    <td><span class="rank-badge ${rankClass}">${index + 1}</span></td>
+                    <td style="display:flex; align-items:center; gap:10px;">${imgStr} <span style="font-weight:600; color:#1f2937;">${escapeHTML(p.name)}</span></td>
+                    <td class="${getScoreColorClass(p.score)}" style="font-size:1.1rem;">${p.score > 0 ? '+'+p.score : p.score}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('groupScoreModal').classList.add('active');
+        }
+
+        function closeGroupScoreModal() { document.getElementById('groupScoreModal').classList.remove('active'); }
+
+        function editGroup(groupId) {
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return;
+            
+            const newName = prompt(`แก้ไขกลุ่ม: ${group.name}\n\n- เปลี่ยนชื่อ : พิมพ์ชื่อใหม่แล้วกด OK\n- ลบเฉพาะกลุ่มนี้ออกจากรายการ : ลบข้อความออกให้หมดแล้วกด OK\n(ประวัติการเล่นเก่าๆ จะยังคงอยู่)`, group.name);
+            if (newName === null) return; 
+            
+            if (newName.trim() === '') {
+                if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบทางลัดกลุ่ม "${group.name}" ?\n(ข้อมูลประวัติการเล่นของกลุ่มนี้จะยังคงอยู่)`)) {
+                    groups = groups.filter(g => g.id !== groupId);
+                    saveGroupsData();
+                }
+            } else {
+                group.name = newName.trim();
+                saveGroupsData();
+            }
+        }
+
+        function renderTopStats() {
+            const container = document.getElementById('topStatsContainer');
+            if (players.length < 2) { container.style.display = 'none'; return; }
+            
+            // Hide Top Stats if everyone has 0 score (i.e. just reset)
+            const allZero = players.every(p => p.totalScore === 0);
+            if (allZero) { container.style.display = 'none'; return; }
+
+            container.style.display = 'flex';
+            const sorted = [...players].sort((a, b) => b.totalScore - a.totalScore);
+            const highest = sorted[0]; const lowest = sorted[sorted.length - 1];
+            const getImg = (p) => p.image ? `<img src="${escapeHTML(p.image)}" class="stat-img">` : `<div class="stat-img"></div>`;
+
+            container.innerHTML = `
+                <div class="stat-card highest">
+                    <div class="stat-icon">👑</div>
+                    ${getImg(highest)}
+                    <div class="stat-info">
+                        <h3>เซียนไพ่</h3>
+                        <p class="name">${escapeHTML(highest.name)}</p>
+                        <p class="score">${highest.totalScore > 0 ? '+'+highest.totalScore : highest.totalScore}</p>
+                    </div>
+                </div>
+                <div class="stat-card lowest">
+                    <div class="stat-icon">🐷</div>
+                    ${getImg(lowest)}
+                    <div class="stat-info">
+                        <h3>หมูแจกแต้ม</h3>
+                        <p class="name">${escapeHTML(lowest.name)}</p>
+                        <p class="score">${lowest.totalScore > 0 ? '+'+lowest.totalScore : lowest.totalScore}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openEditModal() {
+            const container = document.getElementById('editPlayerList');
+            container.innerHTML = '';
+            if(players.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#6b7280;">ไม่มีผู้เล่นให้แก้ไข</p>';
+            } else {
+                players.forEach(p => {
+                    const imgStr = p.image ? `<img src="${escapeHTML(p.image)}" class="player-img-small">` : `<div class="player-img-small"></div>`;
+                    container.innerHTML += `
+                        <div class="edit-item">
+                            ${imgStr}
+                            <input type="text" id="editName_${p.id}" value="${escapeHTML(p.name)}">
+                            <input type="file" id="editImg_${p.id}" accept="image/*">
+                            
+                            <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end; margin-top: 5px;">
+                                <button class="btn-danger btn-sm" onclick="deletePlayer('${p.id}')" style="padding:10px 15px; flex: 1; margin: 0;">🗑️ ลบ</button>
+                                <button class="btn-success btn-sm" onclick="savePlayerEdit('${p.id}')" style="padding:10px 15px; flex: 1; margin: 0;">💾 บันทึก</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+
+        function savePlayerEdit(id) {
+            const newName = document.getElementById(`editName_${id}`).value.trim();
+            const fileInput = document.getElementById(`editImg_${id}`);
+            const playerIndex = players.findIndex(p => p.id === id);
+            
+            if(playerIndex === -1 || !newName) return;
+            players[playerIndex].name = newName;
+
+            if (fileInput.files.length > 0) {
+                getBase64Image(fileInput.files[0], function(base64Data) {
+                    players[playerIndex].image = base64Data;
+                    saveData(); openEditModal(); 
+                });
+            } else {
+                saveData(); openEditModal(); 
+            }
+        }
+
+        function deletePlayer(id) {
+            const player = players.find(p => p.id === id);
+            if (!player) return;
+            
+            if (confirm(`คุณแน่ใจหรือไม่ที่จะลบผู้เล่น "${player.name}" ?\n\n⚠️ ข้อมูลคะแนนรวมของผู้เล่นคนนี้จะถูกลบออกทั้งหมด\n(ประวัติในกลุ่มที่เคยเล่นจะแสดงเป็น 'ถูกลบ')`)) {
+                players = players.filter(p => p.id !== id);
+                selectedPlayerIds = selectedPlayerIds.filter(selectedId => selectedId !== id);
+                saveData(); openEditModal(); renderUI();
+            }
+        }
+
+        function renderUI() {
+            renderRoundSelection();
+            renderLatestRoundInfo();
+            renderLeaderboard();
+            renderGroups();
+            renderTopStats();
+        }
+    </script>
+</body>
+</html>

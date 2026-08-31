@@ -65,7 +65,7 @@ export function RoundSetup({
         เริ่มเกม
       </h2>
 
-      <div className="flex flex-col gap-2">
+      <div className="@container flex flex-col gap-2">
         <p className="text-sm text-text-muted">1. เลือกผู้เล่นในรอบนี้</p>
         <RoundPlayerSelect
           players={players}

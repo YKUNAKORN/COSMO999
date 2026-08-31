@@ -1,8 +1,9 @@
 "use client";
 
-// Home: set up a round to play, plus the roster tools for adding, editing,
-// and removing players. The badge in the header doubles as the live
-// connection indicator for the roster.
+// Play page: set up a round, plus the roster tools for adding, editing, and
+// removing players. The brand bar lives in the app shell; this file renders
+// only the page content. The badge is the live connection indicator for the
+// roster read.
 import { Loader2, TriangleAlert, Wifi } from "lucide-react";
 import { CreatePlayerForm } from "@/components/CreatePlayerForm";
 import { PlayerList } from "@/components/PlayerList";
@@ -13,12 +14,14 @@ export default function HomePage() {
   const { players, loading, error } = usePlayers();
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-8 px-4 py-10 sm:px-6">
-      <header className="flex items-center justify-between gap-3">
+    <div className="flex flex-col gap-6">
+      <div className="reveal flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">โต๊ะไพ่ดัมมี่</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            ตั้งค่ารอบ
+          </h1>
           <p className="text-sm text-text-muted">
-            ตั้งค่ารอบแล้วไปกรอกคะแนน
+            เลือกผู้เล่นกับตัวคูณ แล้วไปกรอกคะแนน
           </p>
         </div>
 
@@ -40,21 +43,25 @@ export default function HomePage() {
             </>
           )}
         </span>
-      </header>
+      </div>
 
-      <RoundSetup players={players} loading={loading} />
-
-      <section className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight">จัดการผู้เล่น</h2>
-          <p className="text-sm text-text-muted">
-            เพิ่ม แก้ไข หรือลบผู้เล่นในวง
-          </p>
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="reveal">
+          <RoundSetup players={players} loading={loading} />
         </div>
 
-        <CreatePlayerForm />
-        <PlayerList players={players} loading={loading} />
-      </section>
-    </main>
+        <section className="reveal flex flex-col gap-4">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">จัดการผู้เล่น</h2>
+            <p className="text-sm text-text-muted">
+              เพิ่ม แก้ไข หรือลบผู้เล่นในวง
+            </p>
+          </div>
+
+          <CreatePlayerForm />
+          <PlayerList players={players} loading={loading} />
+        </section>
+      </div>
+    </div>
   );
 }

@@ -36,7 +36,7 @@ export function RoundPlayerSelect({
   }
 
   return (
-    <ul className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 sm:grid-cols-3">
+    <ul className="grid grid-cols-1 gap-2 @[20rem]:grid-cols-2 @[32rem]:grid-cols-3">
       {players.map((player) => {
         const selected = selectedIds.includes(player.id);
         return (
