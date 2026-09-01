@@ -1,13 +1,14 @@
 "use client";
 
-// "Start game" panel: choose who is in the round and the score multiplier.
-// This component owns the round-setup state; phase 2c reads validSelectedIds
-// / multiplier / isRandom from here to build the score-entry step. Nothing
-// in this file touches Firebase.
+// "Start game" panel: choose who is in the round and the score multiplier,
+// then hand off to the score-entry step. This component owns the round-setup
+// state and the two-step ('setup' -> 'entry') switch. Nothing in this file
+// touches Firebase.
 import { useState } from "react";
 import { ArrowRight, Play } from "lucide-react";
 import { MULTIPLIERS, MultiplierPicker } from "@/components/MultiplierPicker";
 import { RoundPlayerSelect } from "@/components/RoundPlayerSelect";
+import { ScoreEntry } from "@/components/ScoreEntry";
 import type { Player } from "@/types/models";
 
 // A round needs at least two players to compute score differences.
@@ -23,6 +24,10 @@ export function RoundSetup({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [multiplier, setMultiplier] = useState<number>(1);
   const [isRandom, setIsRandom] = useState(false);
+  const [step, setStep] = useState<"setup" | "entry">("setup");
+  // Frozen copy of the chosen players, taken when the round starts so a
+  // roster edit during score entry cannot add or remove a scored player.
+  const [roundPlayers, setRoundPlayers] = useState<Player[]>([]);
 
   function togglePlayer(id: string) {
     setSelectedIds((current) =>
@@ -54,8 +59,25 @@ export function RoundSetup({
   const enoughPlayers = validSelectedIds.length >= MIN_PLAYERS;
 
   function handleProceed() {
-    // TODO(phase-2c): advance to the score-entry step using validSelectedIds,
-    // multiplier and isRandom. Phase 2b performs no navigation and no write.
+    // Snapshot in selection order. isRandom stays in this component's state
+    // and is read by phase 2d when it writes the history row; the score-entry
+    // step does not need it.
+    const snapshot = validSelectedIds
+      .map((id) => players.find((player) => player.id === id))
+      .filter((player): player is Player => player !== undefined);
+    if (snapshot.length < MIN_PLAYERS) return;
+    setRoundPlayers(snapshot);
+    setStep("entry");
+  }
+
+  if (step === "entry") {
+    return (
+      <ScoreEntry
+        players={roundPlayers}
+        multiplier={multiplier}
+        onBack={() => setStep("setup")}
+      />
+    );
   }
 
   return (

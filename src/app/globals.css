@@ -27,6 +27,8 @@
   --color-ivory-200: #d9d3c1;
   --color-ivory-400: #a8a291;
 
+  --color-emerald-400: #3ecf7f;
+
   /* Semantic tokens - preferred in UI code */
   --color-bg: var(--color-felt-950);
   --color-surface: var(--color-felt-900);
@@ -44,6 +46,10 @@
   --color-danger: var(--color-crimson-500);
   --color-danger-strong: var(--color-crimson-600);
   --color-on-danger: var(--color-ivory-50);
+
+  /* Positive movement: a winning chip, a score gained. Distinct from accent
+     (gold, used for controls) so a plus figure never reads as a button. */
+  --color-success: var(--color-emerald-400);
 
   --color-suit-red: var(--color-crimson-400);
 
