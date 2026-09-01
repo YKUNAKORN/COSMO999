@@ -149,6 +149,27 @@
   animation: cosmo-score-pulse var(--duration-slow) var(--ease-out-soft);
 }
 
+/* Shake effect for extreme multipliers / negative scores (ช็อตฟีล) */
+@keyframes cosmo-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px) rotate(-2deg); }
+  40%, 80% { transform: translateX(4px) rotate(2deg); }
+}
+
+.animate-shake {
+  animation: cosmo-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes cosmo-marquee {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: cosmo-marquee 15s linear infinite;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
