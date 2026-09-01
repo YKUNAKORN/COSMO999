@@ -103,7 +103,16 @@ function RoundSetupInner({
   }
 
   function randomizeMultiplier() {
-    const next = MULTIPLIERS[Math.floor(Math.random() * MULTIPLIERS.length)];
+    const rand = Math.random() * 100;
+    let next = 1;
+    if (rand < 5) next = 1;
+    else if (rand < 15) next = 2;
+    else if (rand < 25) next = 4;
+    else if (rand < 50) next = 5;
+    else if (rand < 75) next = 8;
+    else if (rand < 95) next = 10;
+    else next = 20;
+
     setMultiplier(next);
     setIsRandom(true);
   }
