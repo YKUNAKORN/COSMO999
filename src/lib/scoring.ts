@@ -11,9 +11,8 @@ export interface RoundScoreResult {
   // always 0 in practice for integer raw scores; a non-zero value means the
   // caller passed something malformed and the round must not be saved.
   totalNetScore: number;
-  // True when at least one player finished positive. This is an input for
-  // phase 2d (it decides whether to fire the win confetti), not dead code -
-  // phase 2c computes it but has no use for it yet.
+  // True when at least one player finished positive. Decides whether the
+  // win confetti fires after a successful save.
   hasPositive: boolean;
 }
 

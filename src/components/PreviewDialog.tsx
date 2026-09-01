@@ -5,8 +5,8 @@
 // construction. Built on the native <dialog> element so Esc-to-close, the
 // modal backdrop, focus containment, and focus return are handled by the
 // platform rather than hand-rolled. Mounted only while the preview is open
-// (ScoreEntry gates it) and touches no Firebase - the confirm button is the
-// phase 2d seam.
+// (ScoreEntry gates it); the confirm button triggers ScoreEntry's atomic
+// save, this component itself touches no Firebase.
 import { useEffect, useRef } from "react";
 import { Check, X } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
