@@ -4,7 +4,14 @@
 // then hand off to the score-entry step. This component owns the round-setup
 // state and the two-step ('setup' -> 'entry') switch. Nothing in this file
 // touches Firebase.
-import { useState } from "react";
+//
+// Preset selection: if the URL contains ?preset=id1,id2,id3 (set by
+// Groups.tsx when "เล่นกลุ่มนี้" is tapped), RoundSetup pre-selects those
+// player ids on first mount and then replaces the URL to remove the param.
+// This is the only place that reads ?preset; the param is an ephemeral
+// hand-off mechanism, not persistent state.
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Play } from "lucide-react";
 import { MULTIPLIERS, MultiplierPicker } from "@/components/MultiplierPicker";
 import { RoundPlayerSelect } from "@/components/RoundPlayerSelect";
@@ -14,13 +21,18 @@ import type { Player } from "@/types/models";
 // A round needs at least two players to compute score differences.
 const MIN_PLAYERS = 2;
 
-export function RoundSetup({
+// Inner component that uses useSearchParams (requires Suspense boundary in
+// the parent, provided by the RoundSetup export below).
+function RoundSetupInner({
   players,
   loading,
 }: {
   players: Player[];
   loading: boolean;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [multiplier, setMultiplier] = useState<number>(1);
   const [isRandom, setIsRandom] = useState(false);
@@ -28,6 +40,28 @@ export function RoundSetup({
   // Frozen copy of the chosen players, taken when the round starts so a
   // roster edit during score entry cannot add or remove a scored player.
   const [roundPlayers, setRoundPlayers] = useState<Player[]>([]);
+
+  // Apply ?preset=id1,id2 on first mount. Filter to ids that are actually
+  // in the current players list (guard: a player deleted since the group
+  // was saved must not appear selected). Then clean the URL immediately so
+  // the param does not persist on refresh or back-navigation.
+  useEffect(() => {
+    const raw = searchParams.get("preset");
+    if (!raw) return;
+    const requestedIds = raw.split(",").filter(Boolean);
+    // players may not be loaded yet on first mount; accept the ids that are
+    // already present and let the normal roster filter handle the rest.
+    const validIds = requestedIds.filter((id) =>
+      players.some((p) => p.id === id),
+    );
+    if (validIds.length > 0) {
+      setSelectedIds(validIds);
+    }
+    // Remove the param from the URL without adding a history entry so the
+    // user's back button goes to /groups, not back to /?preset=...
+    router.replace("/");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only; searchParams/players/router are stable refs.
 
   function togglePlayer(id: string) {
     setSelectedIds((current) =>
@@ -140,5 +174,31 @@ export function RoundSetup({
         ) : null}
       </div>
     </section>
+  );
+}
+
+// Exported wrapper provides the Suspense boundary required by useSearchParams.
+// The fallback renders the same section shell so layout does not shift while
+// the param is read; null would cause a brief collapse.
+export function RoundSetup({
+  players,
+  loading,
+}: {
+  players: Player[];
+  loading: boolean;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <section className="flex flex-col gap-5 rounded-lg border border-border bg-surface p-5 shadow-card opacity-50">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <Play className="size-5 text-accent" />
+            เริ่มเกม
+          </h2>
+        </section>
+      }
+    >
+      <RoundSetupInner players={players} loading={loading} />
+    </Suspense>
   );
 }
