@@ -21,7 +21,6 @@ export interface SaveRoundArgs {
 
 export interface SaveRoundResult {
   committed: boolean;
-  room: RoomData | null;
 }
 
 // Firebase's transaction updater is untyped (v9 hands the raw current value
@@ -59,7 +58,10 @@ function applyRound(room: RoomData, args: SaveRoundArgs): RoomData {
     if (index > -1) {
       players[index] = {
         ...players[index],
-        totalScore: players[index].totalScore + net,
+        // `?? 0` matches legacy's `(safePlayers[pIndex].totalScore || 0)`: a
+        // row read back from RTDB without this field would otherwise turn
+        // the sum into NaN and Firebase would reject the whole write.
+        totalScore: (players[index].totalScore ?? 0) + net,
         latestScore: net,
       };
     }
@@ -112,14 +114,21 @@ function applyRound(room: RoomData, args: SaveRoundArgs): RoomData {
  */
 export async function saveRound(args: SaveRoundArgs): Promise<SaveRoundResult> {
   try {
-    const result = await runTransaction(ref(database, DB_PATHS.root), (currentData: unknown) =>
-      applyRound(normalizeRoom(currentData), args),
+    const result = await runTransaction(
+      ref(database, DB_PATHS.root),
+      (currentData: unknown) => applyRound(normalizeRoom(currentData), args),
+      // The room root has no active listener (only its players/groups/history
+      // children do), so the SDK cannot serve a cached value here and this
+      // transaction's first pass always runs on `currentData: null`. With the
+      // default applyLocally: true, that null-derived result (an otherwise-
+      // empty room plus just this round) would flash into the UI for one
+      // round trip before the server value arrives and the transaction
+      // re-runs. Disabling it skips that optimistic broadcast; the write
+      // itself is unaffected.
+      { applyLocally: false },
     );
-    return {
-      committed: result.committed,
-      room: result.committed ? normalizeRoom(result.snapshot.val()) : null,
-    };
+    return { committed: result.committed };
   } catch {
-    return { committed: false, room: null };
+    return { committed: false };
   }
 }
