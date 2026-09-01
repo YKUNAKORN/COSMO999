@@ -1,16 +1,33 @@
 "use client";
 
-// Step two of starting a round: type each player's raw score, then check it.
+// Step two of starting a round: type each player's raw score, check it, then
+// confirm to atomically save it (players + group + history) to Firebase.
 // The player list here is a snapshot taken when the round began (see
 // RoundSetup.handleProceed) - deleting someone from the roster mid-entry can
-// no longer drop a stray id into the scores. Nothing here writes to Firebase;
-// "ยืนยันและบันทึก" in the preview is the phase 2d seam.
+// no longer drop a stray id into the scores.
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Flame, PartyPopper, RotateCcw } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PreviewDialog } from "@/components/PreviewDialog";
+import { generateRoundCommentary } from "@/lib/commentary";
+import { saveRound } from "@/lib/rounds";
 import { calculateRoundScores, type RoundScoreResult } from "@/lib/scoring";
+import { useHistory } from "@/hooks/useHistory";
 import type { Player } from "@/types/models";
+
+// Confetti only runs client-side and only for a committed save with a
+// positive score, so it is loaded on demand rather than bundled up front.
+async function fireConfetti() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const { default: confetti } = await import("canvas-confetti");
+  confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 9999 });
+}
+
+type SaveState =
+  | { status: "idle" }
+  | { status: "saving" }
+  | { status: "saved"; commentary: string }
+  | { status: "error"; message: string };
 
 // Empty, "-", or anything non-numeric counts as 0, matching the legacy
 // `parseInt(input.value) || 0`.
@@ -28,17 +45,25 @@ export function ScoreEntry({
   players,
   multiplier,
   onBack,
+  onReset,
 }: {
   players: Player[];
   multiplier: number;
   onBack: () => void;
+  // Clears the round selection and returns to setup, called from the
+  // "เริ่มรอบใหม่" button after a successful save.
+  onReset: () => void;
 }) {
   // Keyed by player id; absent means the field is still empty.
   const [rawInputs, setRawInputs] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [checked, setChecked] = useState<CheckedRound | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  // Commentary needs the round history that predates this save, to detect a
+  // comeback; this is a live subscription so it stays current.
+  const { history } = useHistory();
 
   // Land the cursor in the first field, like the legacy setupScoreInput.
   useEffect(() => {
@@ -87,10 +112,53 @@ export function ScoreEntry({
     setChecked({ rawScores, result });
   }
 
-  function handleConfirm() {
-    // TODO(phase-2d): atomic write of players + groups + history, then fire
-    // the win confetti (result.hasPositive) and the round commentary. Phase
-    // 2c stops here - the round is validated but nothing is persisted.
+  async function handleConfirm() {
+    if (!checked || saveState.status === "saving") return;
+
+    setSaveState({ status: "saving" });
+    const commentary = generateRoundCommentary(checked.result.netScores, players, history);
+
+    const outcome = await saveRound({
+      playerIds: players.map((player) => player.id),
+      netScores: checked.result.netScores,
+      multiplier,
+      commentary,
+    });
+
+    if (!outcome.committed) {
+      setSaveState({
+        status: "error",
+        message: "บันทึกไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่",
+      });
+      return;
+    }
+
+    if (checked.result.hasPositive) void fireConfetti();
+    setChecked(null);
+    setSaveState({ status: "saved", commentary });
+  }
+
+  if (saveState.status === "saved") {
+    return (
+      <section className="reveal flex flex-col items-center gap-4 rounded-lg border border-border bg-surface p-8 text-center shadow-card">
+        <PartyPopper className="size-10 text-accent" />
+        <h2 className="text-lg font-semibold">บันทึกรอบแล้ว</h2>
+        {saveState.commentary ? (
+          <p className="flex items-center gap-2 rounded-md border border-danger bg-danger/10 px-3 py-2 text-sm text-danger">
+            <Flame className="size-4 shrink-0" />
+            {saveState.commentary}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          onClick={onReset}
+          className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90"
+        >
+          <RotateCcw className="size-4" />
+          เริ่มรอบใหม่
+        </button>
+      </section>
+    );
   }
 
   return (
@@ -176,7 +244,12 @@ export function ScoreEntry({
           rawScores={checked.rawScores}
           result={checked.result}
           multiplier={multiplier}
-          onClose={() => setChecked(null)}
+          saving={saveState.status === "saving"}
+          error={saveState.status === "error" ? saveState.message : null}
+          onClose={() => {
+            setChecked(null);
+            setSaveState({ status: "idle" });
+          }}
           onConfirm={handleConfirm}
         />
       ) : null}

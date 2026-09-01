@@ -59,9 +59,9 @@ export function RoundSetup({
   const enoughPlayers = validSelectedIds.length >= MIN_PLAYERS;
 
   function handleProceed() {
-    // Snapshot in selection order. isRandom stays in this component's state
-    // and is read by phase 2d when it writes the history row; the score-entry
-    // step does not need it.
+    // Snapshot in selection order. isRandom is not persisted anywhere
+    // (HistoryEntry has no field for it); it only decides the multiplier
+    // picker's "random" mark in this component.
     const snapshot = validSelectedIds
       .map((id) => players.find((player) => player.id === id))
       .filter((player): player is Player => player !== undefined);
@@ -70,12 +70,25 @@ export function RoundSetup({
     setStep("entry");
   }
 
+  // After a round is saved: clear the selection and multiplier and return to
+  // setup, matching the legacy reset (selectedPlayerIds = [], multiplier
+  // back to 1, isRandom cleared) - distinct from onBack, which keeps the
+  // current selection so the player can go correct a mistake.
+  function resetRound() {
+    setSelectedIds([]);
+    setMultiplier(1);
+    setIsRandom(false);
+    setRoundPlayers([]);
+    setStep("setup");
+  }
+
   if (step === "entry") {
     return (
       <ScoreEntry
         players={roundPlayers}
         multiplier={multiplier}
         onBack={() => setStep("setup")}
+        onReset={resetRound}
       />
     );
   }
