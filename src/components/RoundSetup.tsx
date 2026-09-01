@@ -14,7 +14,7 @@
 //    player ids and returns to setup mode.
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, Flame } from "lucide-react";
 import { MULTIPLIERS, MultiplierPicker } from "@/components/MultiplierPicker";
 import { RoundPlayerSelect } from "@/components/RoundPlayerSelect";
 import { ScoreEntry } from "@/components/ScoreEntry";
@@ -182,12 +182,26 @@ function RoundSetupInner({
 
       <div className="flex flex-col gap-2">
         <p className="text-sm text-text-muted">2. ตัวคูณคะแนนรอบนี้</p>
-        <MultiplierPicker
-          value={multiplier}
-          onChange={pickMultiplier}
-          onRandomize={randomizeMultiplier}
-          isRandom={isRandom}
-        />
+        <div className={multiplier === 20 ? "animate-shake" : ""}>
+          <MultiplierPicker
+            value={multiplier}
+            onChange={pickMultiplier}
+            onRandomize={randomizeMultiplier}
+            isRandom={isRandom}
+          />
+        </div>
+        {multiplier === 20 && (
+          <div className="flex flex-col gap-2 animate-shake mt-1">
+            <p className="flex items-center gap-1 text-sm font-semibold text-danger">
+              <Flame className="size-4" /> x20 จะเครซี่!!
+            </p>
+            <img
+              src="/memes/meme_x20.jpg"
+              alt="Nuclear Explosion Meme"
+              className="w-full max-w-sm rounded-md border border-danger/20 shadow-md"
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-2 border-t border-border pt-4">
@@ -200,7 +214,7 @@ function RoundSetupInner({
           disabled={!enoughPlayers}
           className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          ไปกรอกคะแนน
+          ลุยดิวะ!
           <ArrowRight className="size-4" />
         </button>
         {!enoughPlayers ? (

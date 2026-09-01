@@ -55,7 +55,7 @@ export function CreatePlayerForm() {
             setName(event.target.value);
             setError(null);
           }}
-          placeholder="เช่น สมชาย"
+          placeholder="เช่น สมชาย (ตัวตึง)"
           className="rounded-md border border-border bg-bg px-3 py-2 text-base outline-none focus:border-border-strong"
         />
       </label>
@@ -93,7 +93,7 @@ export function CreatePlayerForm() {
         ) : (
           <UserPlus className="size-4" />
         )}
-        เพิ่มผู้เล่น
+        เชิญตัวตึงเข้าตี้
       </button>
     </form>
   );

@@ -7,9 +7,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   Crown,
   Spade,
-  TrendingDown,
   TriangleAlert,
   Users,
+  Flame,
+  Banknote,
+  Ghost,
   type LucideIcon,
 } from "lucide-react";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
@@ -132,7 +134,7 @@ function PodiumCard({
       className="reveal flex w-24 flex-col items-center gap-2 sm:w-28"
       style={{ animationDelay: `${(rank - 1) * 100}ms` }}
     >
-      <div className="flex flex-col items-center gap-1">
+      <div className="flex flex-col items-center gap-1 relative">
         {rank === 1 ? (
           <Crown className="size-6 text-accent" />
         ) : (
@@ -141,11 +143,29 @@ function PodiumCard({
         <span className={rank === 1 ? "rounded-full shadow-gold" : ""}>
           <PlayerAvatar player={player} className={style.avatar} />
         </span>
+        {rank === 1 && (
+          <img
+            src="/memes/meme_mvp.jpg"
+            alt="MVP Meme"
+            className="absolute -right-6 -bottom-2 size-12 rounded-full border-2 border-accent object-cover rotate-12 shadow-md"
+          />
+        )}
       </div>
 
-      <p className="w-full truncate text-center text-sm font-semibold sm:text-base">
-        {player.name}
-      </p>
+      <div className="flex flex-col items-center gap-0.5">
+        <p className="w-full truncate text-center text-sm font-semibold sm:text-base">
+          {player.name}
+        </p>
+        {rank === 1 ? (
+          <span className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">
+            <Flame className="size-3" /> ตัวตึง
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-text-muted">
+            <Ghost className="size-3" /> ทรงอย่างแบด
+          </span>
+        )}
+      </div>
       <AnimatedNumber
         value={player.totalScore}
         className={`text-lg font-bold tabular-nums sm:text-xl ${scoreTone(player.totalScore)}`}
@@ -199,12 +219,19 @@ function RoastCallout({
       className={`reveal flex items-center gap-3 rounded-lg border border-danger/40 bg-surface p-4 shadow-card ${pulsing ? "pulse-highlight" : ""}`}
     >
       <span className="grid size-11 shrink-0 place-items-center rounded-full bg-danger/15 text-danger">
-        <TrendingDown className="size-5" />
+        <Banknote className="size-5" />
       </span>
-      <PlayerAvatar player={player} className="size-11 text-lg" />
+      <div className="relative">
+        <PlayerAvatar player={player} className="size-11 text-lg" />
+        <img
+          src="/memes/meme_atm.jpg"
+          alt="Crying Cat ATM"
+          className="absolute -right-2 -bottom-2 size-6 rounded-full border border-danger object-cover -rotate-12"
+        />
+      </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold tracking-wide text-danger">
-          หมูแจกแต้ม
+          ตู้ ATM (รับจบ)
         </p>
         <p className="truncate font-semibold">{player.name}</p>
       </div>
@@ -237,7 +264,12 @@ function LeaderboardRow({
       </span>
       <PlayerAvatar player={player} className="size-10 text-base" />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{player.name}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate font-medium">{player.name}</p>
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-text-muted">
+            <Ghost className="size-3" /> ผู้ทรงศีล
+          </span>
+        </div>
         <LatestScoreLabel latestScore={player.latestScore} />
       </div>
       <AnimatedNumber
@@ -360,6 +392,14 @@ export function Leaderboard() {
           จัดอันดับสายไพ่ประจำวง เรียงจากคะแนนรวมมากไปน้อย
         </p>
       </header>
+
+      {showRoast ? (
+        <div className="overflow-hidden rounded-full border border-danger/30 bg-danger/10 py-1.5 px-3">
+          <p className="animate-marquee whitespace-nowrap text-xs font-semibold text-danger">
+            🔥 Breaking News: {sorted[0].name} แบกตี้จนปวดหลัง ส่วน {lowestPlayer.name} ล้มละลาย เตรียมขอกู้เงินนอกระบบ...
+          </p>
+        </div>
+      ) : null}
 
       <Podium players={podiumPlayers} pulsingIds={pulsingIds} />
 
