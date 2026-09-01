@@ -126,15 +126,22 @@
 
 /* Score-change pulse - Leaderboard rows/podium blocks flash briefly when a
    live update changes a totalScore, so a fresh round feels alive without
-   full FLIP reordering. No `both` fill: the animation must fully hand
-   background-color back to the element's own bg-* utility once it ends,
-   not freeze on the keyframe's transparent end state. */
+   full FLIP reordering. Animates background-image (a solid-to-transparent
+   gradient), not background-color: a running animation overrides its
+   target property for its whole duration, so animating background-color
+   directly would replace the pedestal's own gold/silver/bronze bg-* colour
+   with the fading tint instead of flashing on top of it. background-image
+   paints above background-color, so the gradient overlays it cleanly and
+   the base colour stays visible underneath throughout. */
 @keyframes cosmo-score-pulse {
   from {
-    background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+    background-image: linear-gradient(
+      color-mix(in srgb, var(--color-accent) 35%, transparent),
+      color-mix(in srgb, var(--color-accent) 35%, transparent)
+    );
   }
   to {
-    background-color: transparent;
+    background-image: linear-gradient(transparent, transparent);
   }
 }
 

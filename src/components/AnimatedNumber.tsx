@@ -29,11 +29,16 @@ export function AnimatedNumber({
   className?: string;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
+  // Mirrors displayValue outside React state so a value change that
+  // interrupts an in-flight animation can hand off from wherever the
+  // number actually stopped, not from the older completed-animation start.
+  const displayRef = useRef(0);
   const fromRef = useRef(0);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
       fromRef.current = value;
+      displayRef.current = value;
       setDisplayValue(value);
       return;
     }
@@ -47,16 +52,19 @@ export function AnimatedNumber({
 
     function tick(now: number) {
       const progress = Math.min((now - start) / DURATION_MS, 1);
-      setDisplayValue(from + delta * easeOutSoft(progress));
+      const next = from + delta * easeOutSoft(progress);
+      displayRef.current = next;
+      setDisplayValue(next);
       if (progress < 1) {
         frame = requestAnimationFrame(tick);
-      } else {
-        fromRef.current = value;
       }
     }
 
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      fromRef.current = displayRef.current;
+    };
   }, [value]);
 
   const rounded = Math.round(displayValue);

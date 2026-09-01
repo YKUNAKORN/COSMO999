@@ -285,14 +285,12 @@ function LeaderboardSkeleton() {
     <div className="reveal flex flex-col gap-6">
       <p className="text-sm text-text-muted">กำลังโหลดอันดับ...</p>
       <div className="flex items-end justify-center gap-3 sm:gap-5">
-        {[2, 1, 3].map((rank) => (
+        {([2, 1, 3] as const).map((rank) => (
           <div key={rank} className="flex w-24 flex-col items-center gap-2 sm:w-28">
             <div className="size-16 animate-pulse rounded-full bg-surface-raised sm:size-20" />
             <div className="h-3 w-16 animate-pulse rounded bg-surface-raised" />
             <div
-              className={`w-full animate-pulse rounded-t-lg bg-surface-raised ${
-                rank === 1 ? "h-28 sm:h-36" : rank === 2 ? "h-20 sm:h-24" : "h-16 sm:h-20"
-              }`}
+              className={`w-full animate-pulse rounded-t-lg bg-surface-raised ${PODIUM_STYLE[rank].height}`}
             />
           </div>
         ))}
