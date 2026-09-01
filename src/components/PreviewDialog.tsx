@@ -26,6 +26,8 @@ export function PreviewDialog({
   rawScores,
   result,
   multiplier,
+  saving,
+  error,
   onClose,
   onConfirm,
 }: {
@@ -33,6 +35,10 @@ export function PreviewDialog({
   rawScores: Record<string, number>;
   result: RoundScoreResult;
   multiplier: number;
+  // True while the atomic save is in flight - disables both buttons.
+  saving: boolean;
+  // Inline error from a failed/uncommitted save, or null when none.
+  error: string | null;
   onClose: () => void;
   onConfirm: () => void;
 }) {
@@ -55,7 +61,10 @@ export function PreviewDialog({
   // parent to unmount us. Doing it in this order (rather than letting the
   // effect cleanup call close() after the unmount) is what makes focus return
   // work. Esc arrives here via onCancel with the native close suppressed.
+  // A save in flight must not be dismissable, matching the legacy disabled
+  // cancel button while confirmAndSaveRound runs.
   function dismiss() {
+    if (saving) return;
     dialogRef.current?.close();
     onClose();
   }
@@ -130,19 +139,30 @@ export function PreviewDialog({
           </span>
         </div>
 
+        {error ? (
+          <p
+            role="alert"
+            className="rounded-md border border-danger bg-danger/10 px-3 py-2 text-sm text-danger"
+          >
+            {error}
+          </p>
+        ) : null}
+
         <div className="flex flex-col gap-2 sm:flex-row-reverse">
           <button
             type="button"
             onClick={onConfirm}
-            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90"
+            disabled={saving}
+            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Check className="size-4" />
-            ยืนยันและบันทึก
+            {saving ? "กำลังบันทึก..." : "ยืนยันและบันทึก"}
           </button>
           <button
             type="button"
             onClick={dismiss}
-            className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-colors hover:border-border-strong"
+            disabled={saving}
+            className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-colors hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50"
           >
             กลับไปแก้
           </button>

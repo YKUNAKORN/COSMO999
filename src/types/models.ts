@@ -31,3 +31,12 @@ export interface HistoryEntry {
   playerScores: Record<string, number>;
   commentary: string;
 }
+
+// Shape of the whole room node (DB_PATHS.root). history stays an object
+// keyed by match id - unlike players/groups it is never written back as an
+// array - matching the legacy dummyRoom/history structure exactly.
+export interface RoomData {
+  players: Player[];
+  groups: Group[];
+  history: Record<string, HistoryEntry>;
+}

@@ -8,7 +8,10 @@ import { database } from "./firebase";
 // deleted slots come back as null. dummyRoom/history is an object keyed by
 // match id. All three normalise the same way: take Object.values and drop
 // the null / undefined holes.
-function normalizeList<T>(raw: unknown): T[] {
+// Exported so the round-save transaction (rounds.ts) can normalise the
+// players/groups arrays it reads out of the transaction's raw snapshot the
+// same way the read hooks do.
+export function normalizeList<T>(raw: unknown): T[] {
   if (raw === null || typeof raw !== "object") {
     return [];
   }

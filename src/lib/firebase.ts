@@ -30,6 +30,9 @@ export const database: Database = getDatabase(app);
 const RTDB_ROOT = process.env.NEXT_PUBLIC_RTDB_ROOT || "dummyRoom";
 
 export const DB_PATHS = {
+  // Whole-room node. The phase 2d atomic round save transacts on this path
+  // (never a hardcoded "dummyRoom") so it honours NEXT_PUBLIC_RTDB_ROOT too.
+  root: RTDB_ROOT,
   players: `${RTDB_ROOT}/players`,
   groups: `${RTDB_ROOT}/groups`,
   history: `${RTDB_ROOT}/history`,
