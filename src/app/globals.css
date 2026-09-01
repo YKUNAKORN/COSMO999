@@ -29,6 +29,11 @@
 
   --color-emerald-400: #3ecf7f;
 
+  /* Podium 2nd/3rd place - warm pewter and copper so they sit next to gold
+     without reading as generic slate/bronze. */
+  --color-silver-400: #c7cdd6;
+  --color-copper-500: #c17a4b;
+
   /* Semantic tokens - preferred in UI code */
   --color-bg: var(--color-felt-950);
   --color-surface: var(--color-felt-900);
@@ -52,6 +57,10 @@
   --color-success: var(--color-emerald-400);
 
   --color-suit-red: var(--color-crimson-400);
+
+  /* Rank-2 / rank-3 podium colours. Rank-1 reuses --color-accent (gold). */
+  --color-rank-silver: var(--color-silver-400);
+  --color-rank-bronze: var(--color-copper-500);
 
   /* Radius */
   --radius-sm: 0.375rem;
@@ -113,6 +122,31 @@
 
 .dice-tumble {
   animation: cosmo-dice-tumble var(--duration-slow) var(--ease-pop) both;
+}
+
+/* Score-change pulse - Leaderboard rows/podium blocks flash briefly when a
+   live update changes a totalScore, so a fresh round feels alive without
+   full FLIP reordering. Animates background-image (a solid-to-transparent
+   gradient), not background-color: a running animation overrides its
+   target property for its whole duration, so animating background-color
+   directly would replace the pedestal's own gold/silver/bronze bg-* colour
+   with the fading tint instead of flashing on top of it. background-image
+   paints above background-color, so the gradient overlays it cleanly and
+   the base colour stays visible underneath throughout. */
+@keyframes cosmo-score-pulse {
+  from {
+    background-image: linear-gradient(
+      color-mix(in srgb, var(--color-accent) 35%, transparent),
+      color-mix(in srgb, var(--color-accent) 35%, transparent)
+    );
+  }
+  to {
+    background-image: linear-gradient(transparent, transparent);
+  }
+}
+
+.pulse-highlight {
+  animation: cosmo-score-pulse var(--duration-slow) var(--ease-out-soft);
 }
 
 body {
