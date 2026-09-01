@@ -58,6 +58,8 @@ export function generateRoundCommentary(
       `ตายวงแรกแล้วฟื้นมาแชมป์เฉย! ${winnerName} คัมแบ็กแบบงงๆ`,
       `เจ้าหนี้หน้าสั่น! ${winnerName} พลิกนรกกลับมาทวงทุกบาททุกสตางค์!`,
       `เมื่อกี้แกล้งตายใช่มั้ย? ${winnerName} ลุกมาฟาดเรียบ!`,
+      `ตัวตึงคืนชีพ! ${winnerName} โดนไปรอบก่อน รอบนี้กลับมาแบกวงเฉย!`,
+      `ฟีลตัวพ่อตัวแม่! ${winnerName} ลบตราบาปรอบก่อน คืนฟอร์มโหดจัด!`,
     );
   }
 
@@ -68,6 +70,8 @@ export function generateRoundCommentary(
       `เป็นเจ้าภาพงานศพตัวเองหรอ? ${loserName} แจกทานไป ${minScore} สาธุชนชื่นชม!`,
       `ยับกว่าทิชชู่เปียก! ${loserName} ขิตไป ${minScore} เปิดแอปโอนจ่ายมาซะดีๆ!`,
       `ตู้ ATM เคลื่อนที่! ${loserName} โดนช็อตฟีลไป ${minScore}`,
+      `ฟีลเสี่ยสายเปย์! ${loserName} โดนดูดไป ${minScore} เพื่อนๆ ไหว้ขอบคุณรอบวง!`,
+      `นอนกอดเข่าร้องไห้ไปเลย! ${loserName} แตกยับ ${minScore} กู้ภัยยังไม่กล้าเข้าช่วย!`,
     );
   } else if (minScore < 0) {
     comments.push(
@@ -75,6 +79,9 @@ export function generateRoundCommentary(
       `แค่หยอกๆ ใช่มั้ย? ${loserName} เลือดซิบไป ${minScore} ถือว่าทำบุญให้เพื่อน`,
       `จ่ายมาซะดีๆ ${loserName} โดนไป ${minScore} อย่าเนียนชิ่ง!`,
       `ฝีมือหรือดวงซวย? ${loserName} ติดลบไป ${minScore} ร้องไห้ได้นะ ไม่บอกใคร`,
+      `ดวงกุดจัดๆ ${loserName} โดนสะกิดไป ${minScore} ฟีลคนดวงตกแห่งปี!`,
+      `ตัวจ่ายประจำแก๊ง! ${loserName} รูดบัตรไปเบาๆ ${minScore} เพื่อนรักทุกคน!`,
+      `นั่งงงในดงเซียน! ${loserName} โดนไป ${minScore} ทำหน้าเหมือนโดนของ!`,
     );
   }
 

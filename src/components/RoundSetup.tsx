@@ -5,11 +5,13 @@
 // state and the two-step ('setup' -> 'entry') switch. Nothing in this file
 // touches Firebase.
 //
-// Preset selection: if the URL contains ?preset=id1,id2,id3 (set by
-// Groups.tsx when "เล่นกลุ่มนี้" is tapped), RoundSetup pre-selects those
-// player ids on first mount and then replaces the URL to remove the param.
-// This is the only place that reads ?preset; the param is an ephemeral
-// hand-off mechanism, not persistent state.
+// Preset selection:
+// 1. If the URL contains ?preset=id1,id2,id3 (set by Groups.tsx when
+//    "เล่นกลุ่มนี้" is tapped), RoundSetup pre-selects those player ids on
+//    first mount and then replaces the URL to remove the param.
+// 2. If `presetTrigger` is passed from the parent page (e.g. LatestRoundCard
+//    tapping "เล่นกลุ่มเดิมอีกครั้ง"), RoundSetup immediately selects those
+//    player ids and returns to setup mode.
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Play } from "lucide-react";
@@ -21,14 +23,21 @@ import type { Player } from "@/types/models";
 // A round needs at least two players to compute score differences.
 const MIN_PLAYERS = 2;
 
+export interface PresetTrigger {
+  ids: string[];
+  timestamp: number;
+}
+
 // Inner component that uses useSearchParams (requires Suspense boundary in
 // the parent, provided by the RoundSetup export below).
 function RoundSetupInner({
   players,
   loading,
+  presetTrigger,
 }: {
   players: Player[];
   loading: boolean;
+  presetTrigger?: PresetTrigger | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,6 +71,21 @@ function RoundSetupInner({
     router.replace("/");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount only; searchParams/players/router are stable refs.
+
+  // In-page preset trigger (e.g. from LatestRoundCard "เล่นกลุ่มเดิมอีกครั้ง")
+  useEffect(() => {
+    if (!presetTrigger || !presetTrigger.ids.length) return;
+    const validIds = presetTrigger.ids.filter((id) =>
+      players.some((p) => p.id === id),
+    );
+    if (validIds.length > 0) {
+      setSelectedIds(validIds);
+      setMultiplier(1);
+      setIsRandom(false);
+      setRoundPlayers([]);
+      setStep("setup");
+    }
+  }, [presetTrigger, players]);
 
   function togglePlayer(id: string) {
     setSelectedIds((current) =>
@@ -128,7 +152,10 @@ function RoundSetupInner({
   }
 
   return (
-    <section className="flex flex-col gap-5 rounded-lg border border-border bg-surface p-5 shadow-card">
+    <section
+      id="round-setup-section"
+      className="flex flex-col gap-5 rounded-lg border border-border bg-surface p-5 shadow-card transition-colors hover:border-border-strong"
+    >
       <h2 className="flex items-center gap-2 text-lg font-semibold">
         <Play className="size-5 text-accent" />
         เริ่มเกม
@@ -162,7 +189,7 @@ function RoundSetupInner({
           type="button"
           onClick={handleProceed}
           disabled={!enoughPlayers}
-          className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           ไปกรอกคะแนน
           <ArrowRight className="size-4" />
@@ -183,14 +210,16 @@ function RoundSetupInner({
 export function RoundSetup({
   players,
   loading,
+  presetTrigger,
 }: {
   players: Player[];
   loading: boolean;
+  presetTrigger?: PresetTrigger | null;
 }) {
   return (
     <Suspense
       fallback={
-        <section className="flex flex-col gap-5 rounded-lg border border-border bg-surface p-5 shadow-card opacity-50">
+        <section className="flex flex-col gap-5 rounded-lg border border-border bg-surface p-5 opacity-50 shadow-card">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Play className="size-5 text-accent" />
             เริ่มเกม
@@ -198,7 +227,11 @@ export function RoundSetup({
         </section>
       }
     >
-      <RoundSetupInner players={players} loading={loading} />
+      <RoundSetupInner
+        players={players}
+        loading={loading}
+        presetTrigger={presetTrigger}
+      />
     </Suspense>
   );
 }

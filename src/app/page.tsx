@@ -4,14 +4,28 @@
 // removing players. The brand bar lives in the app shell; this file renders
 // only the page content. The badge is the live connection indicator for the
 // roster read.
+import { useState } from "react";
 import { Loader2, TriangleAlert, Wifi } from "lucide-react";
 import { CreatePlayerForm } from "@/components/CreatePlayerForm";
+import { LatestRoundCard } from "@/components/LatestRoundCard";
 import { PlayerList } from "@/components/PlayerList";
 import { RoundSetup } from "@/components/RoundSetup";
+import type { PresetTrigger } from "@/components/RoundSetup";
+import { useHistory } from "@/hooks/useHistory";
 import { usePlayers } from "@/hooks/usePlayers";
 
 export default function HomePage() {
   const { players, loading, error } = usePlayers();
+  const { history } = useHistory();
+  const [presetTrigger, setPresetTrigger] = useState<PresetTrigger | null>(null);
+
+  function handlePlayAgain(playerIds: string[]) {
+    setPresetTrigger({ ids: playerIds, timestamp: Date.now() });
+    const el = document.getElementById("round-setup-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,8 +60,20 @@ export default function HomePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-        <div className="reveal">
-          <RoundSetup players={players} loading={loading} />
+        <div className="flex flex-col gap-6">
+          <div className="reveal">
+            <RoundSetup
+              players={players}
+              loading={loading}
+              presetTrigger={presetTrigger}
+            />
+          </div>
+
+          <LatestRoundCard
+            history={history}
+            players={players}
+            onPlayAgain={handlePlayAgain}
+          />
         </div>
 
         <section className="reveal flex flex-col gap-4">
