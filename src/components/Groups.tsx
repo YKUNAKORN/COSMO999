@@ -225,7 +225,7 @@ export function Groups() {
         </div>
       ) : (
         /* Group cards grid */
-        <ul className="grid gap-4 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {groups.map((group) => (
             <li key={group.id}>
               <GroupCard
