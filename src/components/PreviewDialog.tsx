@@ -156,7 +156,7 @@ export function PreviewDialog({
             className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Check className="size-4" />
-            {saving ? "กำลังบันทึก..." : "ยืนยันและบันทึก"}
+            {saving ? "กำลังบันทึก..." : "ปิดจ๊อบ! ประจานเลย"}
           </button>
           <button
             type="button"

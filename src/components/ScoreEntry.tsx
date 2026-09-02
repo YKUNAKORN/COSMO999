@@ -226,7 +226,7 @@ export function ScoreEntry({
           className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90"
         >
           <ClipboardCheck className="size-4" />
-          ตรวจสอบคะแนน
+          เช็กบิล!
         </button>
         <button
           type="button"

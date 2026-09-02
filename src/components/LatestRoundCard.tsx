@@ -7,7 +7,7 @@
 // timestamp, per-player score breakdown, commentary roast, and an instant
 // "เล่นกลุ่มเดิมอีกครั้ง" shortcut button with inline player count guards.
 import { useState } from "react";
-import { Clock, Flame, RotateCcw, Sparkles } from "lucide-react";
+import { Clock, Flame, RotateCcw, Sparkles, Dices } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import type { HistoryEntry, Player } from "@/types/models";
 
@@ -32,6 +32,7 @@ export function LatestRoundCard({
   onPlayAgain: (playerIds: string[]) => void;
 }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [penalty, setPenalty] = useState<string | null>(null);
 
   // Sort history newest-first by matchId (Date.now().toString() timestamp).
   const latestMatch =
@@ -102,7 +103,8 @@ export function LatestRoundCard({
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         {entries.map(([pId, score]) => {
           const player = players.find((p) => p.id === pId);
-          const isWinner = score > 0;
+          const maxScore = Math.max(...entries.map((e) => e[1]));
+          const isWinner = score === maxScore;
           const isLoser = score < 0;
 
           return (
@@ -157,15 +159,60 @@ export function LatestRoundCard({
         </p>
       ) : null}
 
-      {/* Play Last Group Again Button */}
-      <button
-        type="button"
-        onClick={handlePlayAgain}
-        className="flex w-full items-center justify-center gap-2 rounded-md border border-accent bg-accent/15 px-4 py-2.5 text-sm font-semibold text-accent transition-all hover:bg-accent hover:text-on-accent active:scale-[0.98]"
-      >
-        <RotateCcw className="size-4" aria-hidden />
-        เล่นกลุ่มเดิมอีกครั้ง
-      </button>
+      {/* Random Penalty Box */}
+      {penalty ? (
+        <div className="flex flex-col gap-2 rounded-md border border-danger/30 bg-danger/10 p-3 text-danger">
+          <div className="flex items-start gap-2.5 text-xs">
+            <Dices className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden />
+            <p className="font-medium leading-relaxed">{penalty}</p>
+          </div>
+          <img
+            src="/memes/meme_penalty.jpg"
+            alt="Point and Laugh"
+            className="w-full max-h-32 object-cover rounded-sm border border-danger/20"
+          />
+        </div>
+      ) : null}
+
+      {/* Buttons */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            const PENALTIES = [
+              "โดนปรับไปเต้นติ๊กต็อกหน้าเซเว่น",
+              "ต้องเลี้ยงชาบูเพื่อนมื้อหน้า",
+              "ให้เป็นทาสรับใช้ 1 วันเต็ม",
+              "ซิทอัพ 50 ทีเดี๋ยวนี้!",
+              "พูดจ๊ะจ๋ากับทุกคนในตี้ 1 วัน",
+              "โพสต์บอกรักแฟนเก่าลงสตอรี่",
+              "ห้ามพูดคำหยาบ 1 ชั่วโมง (หลุดปรับ 20)",
+            ];
+            const minScore = Math.min(...entries.map(e => e[1]));
+            const losers = entries.filter(e => e[1] === minScore);
+            const randomLoser = losers[Math.floor(Math.random() * losers.length)];
+            const loserPlayer = players.find(p => p.id === randomLoser[0]);
+            if (loserPlayer) {
+              const randomTask = PENALTIES[Math.floor(Math.random() * PENALTIES.length)];
+              setPenalty(`กรรมตามสนอง! ${loserPlayer.name} ต้อง: ${randomTask}`);
+            }
+          }}
+          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-danger bg-danger/15 px-3 py-2.5 text-sm font-semibold text-danger transition-all hover:bg-danger hover:text-on-danger active:scale-[0.98]"
+        >
+          <Dices className="size-4" aria-hidden />
+          สุ่มบทลงโทษ
+        </button>
+
+        {/* Play Last Group Again Button */}
+        <button
+          type="button"
+          onClick={handlePlayAgain}
+          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-accent bg-accent/15 px-3 py-2.5 text-sm font-semibold text-accent transition-all hover:bg-accent hover:text-on-accent active:scale-[0.98]"
+        >
+          <RotateCcw className="size-4" aria-hidden />
+          เล่นกลุ่มเดิม
+        </button>
+      </div>
     </section>
   );
 }

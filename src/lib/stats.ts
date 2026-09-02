@@ -63,13 +63,15 @@ export function computePlayerStats(
 
   for (const round of rounds) {
     const score = round.playerScores[playerId];
+    const maxScore = Math.max(...Object.values(round.playerScores));
+    
     totalScore += score;
     fullCumulative.push(totalScore);
 
     if (score > bestRound) bestRound = score;
     if (score < worstRound) worstRound = score;
 
-    if (score > 0) wins++;
+    if (score === maxScore) wins++;
     else if (score < 0) losses++;
     else zeros++;
   }
