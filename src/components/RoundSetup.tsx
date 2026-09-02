@@ -12,16 +12,33 @@
 // 2. If `presetTrigger` is passed from the parent page (e.g. LatestRoundCard
 //    tapping "เล่นกลุ่มเดิมอีกครั้ง"), RoundSetup immediately selects those
 //    player ids and returns to setup mode.
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Play } from "lucide-react";
-import { MULTIPLIERS, MultiplierPicker } from "@/components/MultiplierPicker";
+import { MultiplierPicker } from "@/components/MultiplierPicker";
 import { RoundPlayerSelect } from "@/components/RoundPlayerSelect";
 import { ScoreEntry } from "@/components/ScoreEntry";
-import type { Player } from "@/types/models";
+import type { HistoryEntry, Player } from "@/types/models";
 
 // A round needs at least two players to compute score differences.
 const MIN_PLAYERS = 2;
+
+// Latest play time (epoch ms) per player id, taken from history. A player
+// absent from every round is left out - callers read a missing id as
+// "never played".
+function lastPlayedByPlayer(history: HistoryEntry[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const entry of history) {
+    const time = new Date(entry.timestamp).getTime();
+    if (Number.isNaN(time)) continue;
+    for (const playerId of Object.keys(entry.playerScores ?? {})) {
+      if (map[playerId] === undefined || time > map[playerId]) {
+        map[playerId] = time;
+      }
+    }
+  }
+  return map;
+}
 
 export interface PresetTrigger {
   ids: string[];
@@ -32,15 +49,31 @@ export interface PresetTrigger {
 // the parent, provided by the RoundSetup export below).
 function RoundSetupInner({
   players,
+  history,
   loading,
   presetTrigger,
 }: {
   players: Player[];
+  history: HistoryEntry[];
   loading: boolean;
   presetTrigger?: PresetTrigger | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Roster order for the picker only: oldest / never-played first, the most
+  // recently played sink to the bottom so the group that just finished a
+  // round is right above the action button. The -1 sentinel puts
+  // never-played players above anyone with a real (positive) play time, and
+  // sort() is stable so same-round ties keep their original roster order.
+  const orderedPlayers = useMemo(() => {
+    const lastPlayed = lastPlayedByPlayer(history);
+    return [...players].sort((a, b) => {
+      const aTime = lastPlayed[a.id] ?? -1;
+      const bTime = lastPlayed[b.id] ?? -1;
+      return aTime - bTime;
+    });
+  }, [players, history]);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [multiplier, setMultiplier] = useState<number>(1);
@@ -173,7 +206,7 @@ function RoundSetupInner({
       <div className="@container flex flex-col gap-2">
         <p className="text-sm text-text-muted">1. เลือกผู้เล่นในรอบนี้</p>
         <RoundPlayerSelect
-          players={players}
+          players={orderedPlayers}
           loading={loading}
           selectedIds={validSelectedIds}
           onToggle={togglePlayer}
@@ -218,10 +251,12 @@ function RoundSetupInner({
 // the param is read; null would cause a brief collapse.
 export function RoundSetup({
   players,
+  history,
   loading,
   presetTrigger,
 }: {
   players: Player[];
+  history: HistoryEntry[];
   loading: boolean;
   presetTrigger?: PresetTrigger | null;
 }) {
@@ -238,6 +273,7 @@ export function RoundSetup({
     >
       <RoundSetupInner
         players={players}
+        history={history}
         loading={loading}
         presetTrigger={presetTrigger}
       />

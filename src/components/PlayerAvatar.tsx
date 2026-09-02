@@ -17,7 +17,12 @@ export function PlayerAvatar({
       <span
         role="img"
         aria-label={player.name}
-        className={`${className} shrink-0 rounded-full border border-border bg-cover bg-center`}
+        // block so the size-* width/height apply even when the span is not a
+        // flex item (e.g. wrapped inside PodiumCard); a bare inline span
+        // collapses to zero width, and inline-block would add baseline strut
+        // that throws the rank-1 gold ring off. Matches the block-level
+        // no-image branch below.
+        className={`${className} block shrink-0 rounded-full border border-border bg-cover bg-center`}
         style={{ backgroundImage: `url(${player.image})` }}
       />
     );

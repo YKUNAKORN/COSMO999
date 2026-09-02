@@ -16,7 +16,7 @@ import { usePlayers } from "@/hooks/usePlayers";
 
 export default function HomePage() {
   const { players, loading, error } = usePlayers();
-  const { history } = useHistory();
+  const { history, loading: historyLoading } = useHistory();
   const [presetTrigger, setPresetTrigger] = useState<PresetTrigger | null>(null);
 
   function handlePlayAgain(playerIds: string[]) {
@@ -64,7 +64,8 @@ export default function HomePage() {
           <div className="reveal">
             <RoundSetup
               players={players}
-              loading={loading}
+              history={history}
+              loading={loading || historyLoading}
               presetTrigger={presetTrigger}
             />
           </div>

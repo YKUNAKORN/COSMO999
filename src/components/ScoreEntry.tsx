@@ -187,10 +187,11 @@ export function ScoreEntry({
               {player.name}
             </label>
             {/*
-              type="text" + inputMode="numeric" rather than type="number": a
-              controlled number input drops a lone "-" in several browsers,
-              which would block entering a negative score. parseScore does the
-              validation instead.
+              type="text" with the default text keyboard, not type="number"
+              or inputMode="numeric": a controlled number input drops a lone
+              "-" in several browsers, and the iOS numeric keypad has no minus
+              key at all. Both block entering a negative raw score, which is
+              normal in this game. parseScore does the validation instead.
             */}
             <input
               id={`score-${player.id}`}
@@ -198,7 +199,6 @@ export function ScoreEntry({
                 inputRefs.current[player.id] = node;
               }}
               type="text"
-              inputMode="numeric"
               autoComplete="off"
               placeholder="0"
               value={rawInputs[player.id] ?? ""}
