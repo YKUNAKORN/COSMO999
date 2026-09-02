@@ -12,7 +12,7 @@
 // 2. If `presetTrigger` is passed from the parent page (e.g. LatestRoundCard
 //    tapping "เล่นกลุ่มเดิมอีกครั้ง"), RoundSetup immediately selects those
 //    player ids and returns to setup mode.
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Play, Flame } from "lucide-react";
 import { MultiplierPicker } from "@/components/MultiplierPicker";
@@ -91,13 +91,13 @@ function RoundSetupInner({
     const raw = searchParams.get("preset");
     if (!raw) return;
     const requestedIds = raw.split(",").filter(Boolean);
-    // players may not be loaded yet on first mount; accept the ids that are
-    // already present and let the normal roster filter handle the rest.
-    const validIds = requestedIds.filter((id) =>
-      players.some((p) => p.id === id),
-    );
-    if (validIds.length > 0) {
-      setSelectedIds(validIds);
+    // Select the requested ids as-is. The roster is almost always still
+    // loading on this first client-side mount (usePlayers starts empty and
+    // Firebase emits a tick later), so filtering against `players` here used
+    // to drop every id and silently lose the preset. Validity is enforced
+    // downstream by validSelectedIds, which reacts once players arrive.
+    if (requestedIds.length > 0) {
+      setSelectedIds(requestedIds);
     }
     // Remove the param from the URL without adding a history entry so the
     // user's back button goes to /groups, not back to /?preset=...
@@ -105,13 +105,24 @@ function RoundSetupInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount only; searchParams/players/router are stable refs.
 
+  // Timestamp of the last preset trigger already applied. This effect depends
+  // on `players`, so it re-runs on every live roster update (a name edit, a
+  // saved round). Without this guard it would re-apply the same trigger each
+  // time - overwriting the user's manual selection and, worse, forcing step
+  // back to "setup" while they are mid score-entry. A deferred apply still
+  // works: if players have not loaded when the trigger fires, validIds is
+  // empty, nothing is marked applied, and the next players update retries.
+  const appliedTriggerRef = useRef<number | null>(null);
+
   // In-page preset trigger (e.g. from LatestRoundCard "เล่นกลุ่มเดิมอีกครั้ง")
   useEffect(() => {
     if (!presetTrigger || !presetTrigger.ids.length) return;
+    if (appliedTriggerRef.current === presetTrigger.timestamp) return;
     const validIds = presetTrigger.ids.filter((id) =>
       players.some((p) => p.id === id),
     );
     if (validIds.length > 0) {
+      appliedTriggerRef.current = presetTrigger.timestamp;
       setSelectedIds(validIds);
       setMultiplier(1);
       setIsRandom(false);
