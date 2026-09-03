@@ -159,10 +159,10 @@ export function Stats() {
     stats && stats.totalScore >= 0 ? successColour : dangerColour;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-2xl">
       {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">สถิติ</h1>
+      <div className="reveal mb-6">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">สถิติ</h1>
         <p className="mt-1 text-sm text-text-muted">
           ประวัติการเล่นและกราฟคะแนนรายผู้เล่น
         </p>
@@ -194,7 +194,7 @@ export function Stats() {
               id="stats-player-select"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
-              className="w-full rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-text focus:border-border-strong focus:outline-none sm:max-w-xs"
+              className="w-full rounded-md border border-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:border-border-strong focus:outline-none sm:max-w-xs"
             >
               <option value="">เลือกผู้เล่นเพื่อดูสถิติ...</option>
               {players.map((p) => (

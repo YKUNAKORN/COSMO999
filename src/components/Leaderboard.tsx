@@ -146,7 +146,9 @@ function PodiumCard({
         {rank === 1 && (
           <img
             src="/memes/meme_mvp.jpg"
-            alt="MVP Meme"
+            alt=""
+            loading="lazy"
+            decoding="async"
             className="absolute -right-6 -bottom-2 size-12 rounded-full border-2 border-accent object-cover rotate-12 shadow-md"
           />
         )}
@@ -225,7 +227,9 @@ function RoastCallout({
         <PlayerAvatar player={player} className="size-11 text-lg" />
         <img
           src="/memes/meme_atm.jpg"
-          alt="Crying Cat ATM"
+          alt=""
+          loading="lazy"
+          decoding="async"
           className="absolute -right-2 -bottom-2 size-6 rounded-full border border-danger object-cover -rotate-12"
         />
       </div>

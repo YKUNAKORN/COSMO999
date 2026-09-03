@@ -98,7 +98,7 @@ export function PreviewDialog({
             type="button"
             onClick={dismiss}
             aria-label="ปิด"
-            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
+            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-all hover:bg-surface-raised hover:text-text active:scale-90"
           >
             <X className="size-5" />
           </button>
@@ -153,7 +153,7 @@ export function PreviewDialog({
             type="button"
             onClick={onConfirm}
             disabled={saving}
-            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             <Check className="size-4" />
             {saving ? "กำลังบันทึก..." : "ปิดจ๊อบ! ประจานเลย"}
@@ -162,7 +162,7 @@ export function PreviewDialog({
             type="button"
             onClick={dismiss}
             disabled={saving}
-            className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-colors hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-all hover:border-border-strong active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             กลับไปแก้
           </button>

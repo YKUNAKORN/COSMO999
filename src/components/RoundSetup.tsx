@@ -241,7 +241,9 @@ function RoundSetupInner({
             </p>
             <img
               src="/memes/meme_x20.jpg"
-              alt="Nuclear Explosion Meme"
+              alt=""
+              loading="lazy"
+              decoding="async"
               className="w-full max-w-sm rounded-md border border-danger/20 shadow-md"
             />
           </div>

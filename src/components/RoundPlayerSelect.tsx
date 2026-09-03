@@ -45,7 +45,7 @@ export function RoundPlayerSelect({
               type="button"
               onClick={() => onToggle(player.id)}
               aria-pressed={selected}
-              className={`flex w-full items-center gap-2 rounded-lg border p-2.5 text-left transition-colors ${
+              className={`flex w-full items-center gap-2 rounded-lg border p-2.5 text-left transition-all active:scale-[0.98] ${
                 selected
                   ? "border-border-strong bg-surface-raised"
                   : "border-border bg-surface hover:border-border-strong"

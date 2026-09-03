@@ -89,7 +89,7 @@ export function EditGroupDialog({
             onClick={dismiss}
             disabled={busy}
             aria-label="ปิด"
-            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-raised hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
+            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-all hover:bg-surface-raised hover:text-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             <X className="size-5" />
           </button>
@@ -126,7 +126,7 @@ export function EditGroupDialog({
             type="button"
             onClick={handleRename}
             disabled={busy || !nameChanged}
-            className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             {busy && activeAction === "rename" ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -147,7 +147,7 @@ export function EditGroupDialog({
             type="button"
             onClick={handleDelete}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-md border border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger hover:text-on-danger disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-md border border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition-all hover:bg-danger hover:text-on-danger active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             {busy && activeAction === "delete" ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />

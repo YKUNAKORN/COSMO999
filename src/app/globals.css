@@ -192,3 +192,58 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+  The brand bar is sticky (top-0), so an anchored jump (scrollIntoView to
+  #round-setup-section) or a keyboard tab must clear its height, or the target
+  lands hidden behind it. WCAG 2.2 - Focus Not Obscured.
+*/
+html {
+  scroll-padding-top: 5rem;
+}
+
+/* Brand-coloured text selection instead of the browser default blue. */
+::selection {
+  background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  color: var(--color-text);
+}
+
+/*
+  Visible keyboard focus on every interactive control (WCAG 2.4.7). Scoped to
+  :focus-visible so a pointer tap never draws the ring - only keyboard or
+  programmatic focus does. Gold accent so it reads as brand, not a default.
+  Modern engines already clip the outline to each control's own border-radius.
+*/
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+  Tailwind v4's preflight no longer puts a pointer cursor on buttons, and this
+  app builds nearly every control from <button>. Restore it for enabled
+  controls and mark disabled ones as unavailable so every clickable both looks
+  and feels clickable.
+*/
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+summary {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/*
+  Suppress the grey mobile tap flash. Every control draws its own press
+  feedback (active:scale-*), so the native highlight only muddies it.
+*/
+button,
+a,
+[role="button"],
+input,
+select,
+label {
+  -webkit-tap-highlight-color: transparent;
+}

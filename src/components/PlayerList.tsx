@@ -108,7 +108,7 @@ function PlayerRow({ player }: { player: Player }) {
                 type="button"
                 onClick={enterEdit}
                 aria-label={`แก้ไข ${player.name}`}
-                className="rounded-md p-2 text-text-muted transition-colors hover:bg-surface-raised hover:text-accent"
+                className="rounded-md p-2 text-text-muted transition-all hover:bg-surface-raised hover:text-accent active:scale-90"
               >
                 <Pencil className="size-4" />
               </button>
@@ -116,7 +116,7 @@ function PlayerRow({ player }: { player: Player }) {
                 type="button"
                 onClick={() => setMode("confirm-delete")}
                 aria-label={`ลบ ${player.name}`}
-                className="rounded-md p-2 text-text-muted transition-colors hover:bg-surface-raised hover:text-danger"
+                className="rounded-md p-2 text-text-muted transition-all hover:bg-surface-raised hover:text-danger active:scale-90"
               >
                 <Trash2 className="size-4" />
               </button>
@@ -130,7 +130,7 @@ function PlayerRow({ player }: { player: Player }) {
                 onClick={handleSave}
                 disabled={pending}
                 aria-label="บันทึก"
-                className="rounded-md p-2 text-accent transition-colors hover:bg-surface-raised disabled:opacity-60"
+                className="rounded-md p-2 text-accent transition-all hover:bg-surface-raised active:scale-90 disabled:opacity-60 disabled:active:scale-100"
               >
                 {pending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -143,7 +143,7 @@ function PlayerRow({ player }: { player: Player }) {
                 onClick={resetToView}
                 disabled={pending}
                 aria-label="ยกเลิก"
-                className="rounded-md p-2 text-text-muted transition-colors hover:bg-surface-raised disabled:opacity-60"
+                className="rounded-md p-2 text-text-muted transition-all hover:bg-surface-raised active:scale-90 disabled:opacity-60 disabled:active:scale-100"
               >
                 <X className="size-4" />
               </button>
@@ -157,7 +157,7 @@ function PlayerRow({ player }: { player: Player }) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="self-start rounded-md border border-border bg-surface-raised px-3 py-1.5 text-accent transition-colors hover:border-border-strong"
+            className="self-start rounded-md border border-border bg-surface-raised px-3 py-1.5 text-accent transition-all hover:border-border-strong active:scale-[0.98]"
           >
             {fileName ?? "เปลี่ยนรูป"}
           </button>
@@ -184,7 +184,7 @@ function PlayerRow({ player }: { player: Player }) {
               type="button"
               onClick={handleDelete}
               disabled={pending}
-              className="flex items-center gap-1.5 rounded-md bg-danger px-3 py-1.5 font-semibold text-on-danger transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-md bg-danger px-3 py-1.5 font-semibold text-on-danger transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
             >
               {pending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -197,7 +197,7 @@ function PlayerRow({ player }: { player: Player }) {
               type="button"
               onClick={resetToView}
               disabled={pending}
-              className="rounded-md border border-border px-3 py-1.5 transition-colors hover:bg-surface-raised disabled:opacity-60"
+              className="rounded-md border border-border px-3 py-1.5 transition-all hover:bg-surface-raised active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
             >
               ยกเลิก
             </button>

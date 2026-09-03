@@ -65,7 +65,7 @@ export function CreatePlayerForm() {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-2 self-start rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-accent transition-colors hover:border-border-strong"
+          className="flex items-center gap-2 self-start rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-accent transition-all hover:border-border-strong active:scale-[0.98]"
         >
           <ImagePlus className="size-4" />
           {fileName ?? "เลือกรูป"}
@@ -86,7 +86,7 @@ export function CreatePlayerForm() {
       <button
         type="submit"
         disabled={pending}
-        className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
       >
         {pending ? (
           <Loader2 className="size-4 animate-spin" />

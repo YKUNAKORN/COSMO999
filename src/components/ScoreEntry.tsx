@@ -152,7 +152,7 @@ export function ScoreEntry({
         <button
           type="button"
           onClick={onReset}
-          className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90"
+          className="flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98]"
         >
           <RotateCcw className="size-4" />
           เริ่มรอบใหม่
@@ -223,7 +223,7 @@ export function ScoreEntry({
         <button
           type="button"
           onClick={handleCheck}
-          className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90"
+          className="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98]"
         >
           <ClipboardCheck className="size-4" />
           เช็กบิล!
@@ -231,7 +231,7 @@ export function ScoreEntry({
         <button
           type="button"
           onClick={onBack}
-          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-colors hover:border-border-strong"
+          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-all hover:border-border-strong active:scale-[0.98]"
         >
           <ArrowLeft className="size-4" />
           ย้อนกลับไปแก้การเลือก

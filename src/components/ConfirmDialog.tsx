@@ -55,8 +55,8 @@ export function ConfirmDialog({
   }
 
   const confirmButtonClass = destructive
-    ? "flex flex-1 items-center justify-center gap-2 rounded-md bg-danger px-4 py-2.5 font-semibold text-on-danger transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-    : "flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+    ? "flex flex-1 items-center justify-center gap-2 rounded-md bg-danger px-4 py-2.5 font-semibold text-on-danger transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+    : "flex flex-1 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
 
   return (
     <dialog
@@ -93,7 +93,7 @@ export function ConfirmDialog({
             onClick={dismiss}
             disabled={busy}
             aria-label="ปิด"
-            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-raised hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
+            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-all hover:bg-surface-raised hover:text-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             <X className="size-5" />
           </button>
@@ -134,7 +134,7 @@ export function ConfirmDialog({
             type="button"
             onClick={dismiss}
             disabled={busy}
-            className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-colors hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-all hover:border-border-strong active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           >
             {cancelLabel}
           </button>

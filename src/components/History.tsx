@@ -106,7 +106,7 @@ function HistoryCard({
       <button
         type="button"
         onClick={() => onUndo(entry.id)}
-        className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:border-danger hover:bg-danger/10 hover:text-danger"
+        className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-all hover:border-danger hover:bg-danger/10 hover:text-danger active:scale-[0.98]"
       >
         <Undo2 className="size-4" aria-hidden />
         ยกเลิกผลรอบนี้
@@ -181,11 +181,11 @@ export function History() {
   // --- Render ---
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-2xl">
       {/* Page header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="reveal mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">ประวัติการเล่น</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">ประวัติการเล่น</h1>
           <p className="mt-1 text-sm text-text-muted">
             {sorted.length > 0
               ? `${sorted.length} รอบ — เรียงล่าสุดก่อน`
@@ -198,7 +198,7 @@ export function History() {
             setRecalcError(null);
             setRecalcPending(true);
           }}
-          className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text"
+          className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-all hover:border-border-strong hover:text-text active:scale-[0.98]"
         >
           <RefreshCw className="size-4" aria-hidden />
           คำนวณคะแนนใหม่จากประวัติ

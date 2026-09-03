@@ -168,7 +168,9 @@ export function LatestRoundCard({
           </div>
           <img
             src="/memes/meme_penalty.jpg"
-            alt="Point and Laugh"
+            alt=""
+            loading="lazy"
+            decoding="async"
             className="w-full max-h-32 object-cover rounded-sm border border-danger/20"
           />
         </div>

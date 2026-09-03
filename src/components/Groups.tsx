@@ -82,7 +82,7 @@ function GroupCard({
         <button
           type="button"
           onClick={handlePlay}
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-opacity hover:opacity-90"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-semibold text-on-accent transition-all hover:opacity-90 active:scale-[0.98]"
         >
           <Play className="size-4" aria-hidden />
           เล่นกลุ่มนี้
@@ -93,14 +93,14 @@ function GroupCard({
           <button
             type="button"
             onClick={() => onScore(group.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-all hover:border-border-strong hover:text-text active:scale-[0.98]"
           >
             ดูคะแนน
           </button>
           <button
             type="button"
             onClick={() => onEdit(group.id)}
-            className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text"
+            className="flex items-center justify-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted transition-all hover:border-border-strong hover:text-text active:scale-[0.98]"
             aria-label={`แก้ไขกลุ่ม ${group.name}`}
           >
             <Pencil className="size-4" aria-hidden />
@@ -179,10 +179,10 @@ export function Groups() {
     : null;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-2xl">
       {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">ขาประจำ</h1>
+      <div className="reveal mb-6">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">ขาประจำ</h1>
         <p className="mt-1 text-sm text-text-muted">
           {groups.length > 0
             ? `${groups.length} กลุ่ม — สร้างอัตโนมัติจากรอบที่เล่น`

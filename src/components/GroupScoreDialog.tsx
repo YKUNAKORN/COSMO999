@@ -91,7 +91,7 @@ export function GroupScoreDialog({
             type="button"
             onClick={dismiss}
             aria-label="ปิด"
-            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
+            className="-m-1.5 shrink-0 rounded-md p-1.5 text-text-muted transition-all hover:bg-surface-raised hover:text-text active:scale-90"
           >
             <X className="size-5" />
           </button>
@@ -142,7 +142,7 @@ export function GroupScoreDialog({
         <button
           type="button"
           onClick={dismiss}
-          className="flex w-full items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-colors hover:border-border-strong"
+          className="flex w-full items-center justify-center rounded-md border border-border bg-surface px-4 py-2.5 font-medium text-text transition-all hover:border-border-strong active:scale-[0.98]"
         >
           ปิด
         </button>
