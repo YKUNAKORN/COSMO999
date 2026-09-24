@@ -4,13 +4,17 @@
 // the lowest scorer, and a plain ranked list for everyone else. Scores are
 // derived from `history` for the selected view (current period / all-time /
 // a past period) - read-only, this component and everything it renders
-// never writes to Firebase.
+// never writes to Firebase. A second tab (Hall of Fame) derives past-period
+// champions and last-place finishers from the same history - also read-only.
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarX,
   Crown,
+  Medal,
   Spade,
+  TrendingDown,
   TriangleAlert,
+  Trophy,
   Users,
   Flame,
   Banknote,
@@ -21,6 +25,7 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useHistory } from "@/hooks/useHistory";
+import { getHallOfFame, getTrophyCounts, type PeriodResult } from "@/lib/honors";
 import { aggregatePeriod } from "@/lib/leaderboard";
 import { getCurrentPeriod, listPeriodsInHistory } from "@/lib/periods";
 import type { Player } from "@/types/models";
@@ -111,6 +116,21 @@ function LatestScoreLabel({ latestScore }: { latestScore: number | null }) {
   );
 }
 
+// Accumulated Hall of Fame trophy count, shown next to a player's name
+// wherever they appear on the ranked list. Derived from getTrophyCounts -
+// purely a count of past periods won, unrelated to the currently active view.
+function TrophyBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="flex shrink-0 items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent"
+      aria-label={`เป็นเซียนไพ่ประจำงวดสะสม ${count} ครั้ง`}
+    >
+      <Crown className="size-3" aria-hidden /> x{count}
+    </span>
+  );
+}
+
 const PODIUM_STYLE: Record<
   1 | 2 | 3,
   { pedestal: string; height: string; avatar: string }
@@ -136,13 +156,17 @@ function PodiumCard({
   rank,
   player,
   score,
+  championCount,
   showLatestScore,
+  showPeriodBadge,
   pulsing,
 }: {
   rank: 1 | 2 | 3;
   player: Player;
   score: number;
+  championCount: number;
   showLatestScore: boolean;
+  showPeriodBadge: boolean;
   pulsing: boolean;
 }) {
   const style = PODIUM_STYLE[rank];
@@ -173,9 +197,11 @@ function PodiumCard({
         <p className="w-full truncate text-center text-sm font-semibold sm:text-base">
           {player.name}
         </p>
+        <TrophyBadge count={championCount} />
         {rank === 1 ? (
-          <span className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">
-            <Flame className="size-3" /> ตัวตึง
+          <span className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-center text-[10px] font-bold leading-tight text-accent">
+            <Flame className="size-3 shrink-0" />{" "}
+            {showPeriodBadge ? "เซียนไพ่ประจำงวด" : "ตัวตึง"}
           </span>
         ) : (
           <span className="flex items-center gap-1 rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-text-muted">
@@ -204,10 +230,12 @@ function Podium({
   entries,
   pulsingIds,
   showLatestScore,
+  showPeriodBadge,
 }: {
-  entries: Array<{ player: Player; score: number }>;
+  entries: Array<{ player: Player; score: number; championCount: number }>;
   pulsingIds: Set<string>;
   showLatestScore: boolean;
+  showPeriodBadge: boolean;
 }) {
   const slots: Array<1 | 2 | 3> = [2, 1, 3];
   return (
@@ -221,7 +249,9 @@ function Podium({
             rank={rank}
             player={entry.player}
             score={entry.score}
+            championCount={entry.championCount}
             showLatestScore={showLatestScore}
+            showPeriodBadge={showPeriodBadge}
             pulsing={pulsingIds.has(entry.player.id)}
           />
         );
@@ -233,10 +263,12 @@ function Podium({
 function RoastCallout({
   player,
   score,
+  showPeriodBadge,
   pulsing,
 }: {
   player: Player;
   score: number;
+  showPeriodBadge: boolean;
   pulsing: boolean;
 }) {
   return (
@@ -256,7 +288,7 @@ function RoastCallout({
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold tracking-wide text-danger">
-          หมูแจกแต้ม
+          {showPeriodBadge ? "หมูแจกแต้มประจำงวด" : "หมูแจกแต้ม"}
         </p>
         <p className="truncate font-semibold">{player.name}</p>
       </div>
@@ -271,6 +303,7 @@ function RoastCallout({
 function LeaderboardRow({
   player,
   score,
+  championCount,
   rank,
   showLatestScore,
   pulsing,
@@ -278,6 +311,7 @@ function LeaderboardRow({
 }: {
   player: Player;
   score: number;
+  championCount: number;
   rank: number;
   showLatestScore: boolean;
   pulsing: boolean;
@@ -295,7 +329,12 @@ function LeaderboardRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate font-medium">{player.name}</p>
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-text-muted">
+          <TrophyBadge count={championCount} />
+          <span
+            className={`flex shrink-0 items-center gap-1 rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-text-muted ${
+              championCount > 0 ? "max-sm:hidden" : ""
+            }`}
+          >
             <Ghost className="size-3" /> ผู้ทรงศีล
           </span>
         </div>
@@ -433,12 +472,175 @@ function ViewSwitcher({
   );
 }
 
+type LeaderboardTab = "ranking" | "hall-of-fame";
+
+// Primary tab switch for this page: the live ranking view (podium, roast,
+// list) versus the derived Hall of Fame (past-period champions). Both read
+// from the same players/history subscriptions already loaded by Leaderboard.
+function TabSwitcher({
+  activeTab,
+  onChange,
+}: {
+  activeTab: LeaderboardTab;
+  onChange: (tab: LeaderboardTab) => void;
+}) {
+  const tabs: Array<{ key: LeaderboardTab; label: string; icon: LucideIcon }> = [
+    { key: "ranking", label: "อันดับ", icon: Trophy },
+    { key: "hall-of-fame", label: "ทำเนียบเกียรติยศ", icon: Medal },
+  ];
+
+  return (
+    <div className="reveal inline-flex w-full gap-1 rounded-md border border-border bg-surface-raised p-1 sm:w-fit">
+      {tabs.map(({ key, label, icon: Icon }) => (
+        <button
+          key={key}
+          type="button"
+          aria-pressed={activeTab === key}
+          onClick={() => onChange(key)}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded px-3 py-1.5 text-sm font-semibold transition-colors sm:flex-none sm:px-4 ${
+            activeTab === key
+              ? "bg-accent text-on-accent"
+              : "text-text-muted hover:text-text"
+          }`}
+        >
+          <Icon className="size-4" aria-hidden />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// One honoree group (either the champions or the last-place finishers) for a
+// single Hall of Fame period entry. Champions get the same gold-glow ring the
+// live podium gives its rank-1 card, so "you were #1" reads the same way
+// whether it happened just now or three periods ago.
+function HonoreeGroup({
+  icon: Icon,
+  tone,
+  label,
+  ids,
+  players,
+}: {
+  icon: LucideIcon;
+  tone: "accent" | "danger";
+  label: string;
+  ids: string[];
+  players: Player[];
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className="flex flex-1 flex-wrap items-center gap-2"
+    >
+      <Icon
+        className={`size-4 shrink-0 ${tone === "accent" ? "text-accent" : "text-danger"}`}
+        aria-hidden
+      />
+      {ids.map((id) => {
+        const player = players.find((p) => p.id === id);
+        return (
+          <span key={id} className="flex items-center gap-1.5">
+            {player ? (
+              <span className={tone === "accent" ? "rounded-full shadow-gold" : ""}>
+                <PlayerAvatar player={player} className="size-6 text-xs" />
+              </span>
+            ) : null}
+            <span className="text-sm font-medium">
+              {player ? player.name : "(ถูกลบ)"}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function HallOfFameEntry({
+  result,
+  players,
+  delayMs,
+}: {
+  result: PeriodResult;
+  players: Player[];
+  delayMs: number;
+}) {
+  return (
+    <li
+      className="reveal flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-card"
+      style={{ animationDelay: `${delayMs}ms` }}
+    >
+      <p className="text-sm font-semibold text-text-muted">
+        งวด {result.period.label}
+      </p>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <HonoreeGroup
+          icon={Crown}
+          tone="accent"
+          label="แชมป์ประจำงวด"
+          ids={result.championIds}
+          players={players}
+        />
+        <HonoreeGroup
+          icon={TrendingDown}
+          tone="danger"
+          label="อันดับสุดท้ายประจำงวด"
+          ids={result.lastPlaceIds}
+          players={players}
+        />
+      </div>
+    </li>
+  );
+}
+
+function HallOfFame({
+  results,
+  players,
+}: {
+  results: PeriodResult[];
+  players: Player[];
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="reveal">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          ทำเนียบเกียรติยศ
+        </h1>
+        <p className="text-sm text-text-muted">
+          แชมป์และอันดับสุดท้ายประจำแต่ละงวดที่จบแล้ว เรียงจากล่าสุด
+        </p>
+      </header>
+
+      {results.length === 0 ? (
+        <StateMessage
+          icon={Medal}
+          title="ยังไม่มีงวดที่จบ"
+          description="รอให้งวดปัจจุบันจบก่อน แล้วทำเนียบเกียรติยศจะแสดงที่นี่"
+        />
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {results.map((result, index) => (
+            <HallOfFameEntry
+              key={result.period.key}
+              result={result}
+              players={players}
+              delayMs={index * 60}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function Leaderboard() {
   const { players, loading: playersLoading, error: playersError } = usePlayers();
   const { history, loading: historyLoading, error: historyError } = useHistory();
   const loading = playersLoading || historyLoading;
   const error = playersError ?? historyError;
 
+  const [activeTab, setActiveTab] = useState<LeaderboardTab>("ranking");
   const [viewKey, setViewKey] = useState<string>(() => getCurrentPeriod().key);
   const currentPeriod = getCurrentPeriod();
 
@@ -456,12 +658,15 @@ export function Leaderboard() {
     : [currentPeriod, ...periodsInHistory];
   const activePeriod =
     selectablePeriods.find((period) => period.key === viewKey) ?? null;
+  const isCurrentPeriodView = viewKey === currentPeriod.key;
 
   const scores = useMemo(
     () => aggregatePeriod(history, viewKey),
     [history, viewKey],
   );
   const isViewEmpty = Object.keys(scores).length === 0;
+  const trophyCounts = useMemo(() => getTrophyCounts(history), [history]);
+  const hallOfFame = useMemo(() => getHallOfFame(history), [history]);
 
   const pulsingIds = usePulseOnChange(scores, viewKey);
 
@@ -490,6 +695,19 @@ export function Leaderboard() {
     );
   }
 
+  const tabSwitcher = (
+    <TabSwitcher activeTab={activeTab} onChange={setActiveTab} />
+  );
+
+  if (activeTab === "hall-of-fame") {
+    return (
+      <div className="flex flex-col gap-6">
+        {tabSwitcher}
+        <HallOfFame results={hallOfFame} players={players} />
+      </div>
+    );
+  }
+
   const viewSwitcher = (
     <ViewSwitcher
       viewKey={viewKey}
@@ -508,6 +726,7 @@ export function Leaderboard() {
     // this view is still open).
     return (
       <div className="flex flex-col gap-6">
+        {tabSwitcher}
         <header className="reveal">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             อันดับ
@@ -535,15 +754,18 @@ export function Leaderboard() {
   const scored = players.map((player) => ({
     player,
     score: scores[player.id] ?? 0,
+    championCount: trophyCounts[player.id]?.championCount ?? 0,
   }));
   const sorted = [...scored].sort((a, b) => b.score - a.score);
   const podiumEntries = sorted.slice(0, 3);
   const restEntries = sorted.slice(3);
   const lowestEntry = sorted[sorted.length - 1];
   const showRoast = sorted.length >= 2;
+  const showPeriodBadge = isCurrentPeriodView && showRoast;
 
   return (
     <div className="flex flex-col gap-6">
+      {tabSwitcher}
       <header className="reveal">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           อันดับ
@@ -570,12 +792,14 @@ export function Leaderboard() {
         entries={podiumEntries}
         pulsingIds={pulsingIds}
         showLatestScore={showLatestScore}
+        showPeriodBadge={showPeriodBadge}
       />
 
       {showRoast ? (
         <RoastCallout
           player={lowestEntry.player}
           score={lowestEntry.score}
+          showPeriodBadge={showPeriodBadge}
           pulsing={pulsingIds.has(lowestEntry.player.id)}
         />
       ) : null}
@@ -587,6 +811,7 @@ export function Leaderboard() {
               key={entry.player.id}
               player={entry.player}
               score={entry.score}
+              championCount={entry.championCount}
               rank={index + 4}
               showLatestScore={showLatestScore}
               pulsing={pulsingIds.has(entry.player.id)}
