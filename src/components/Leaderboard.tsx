@@ -1,10 +1,13 @@
 "use client";
 
 // Real-time leaderboard: top-3 podium (Kahoot-style), a roast callout for
-// the lowest scorer, and a plain ranked list for everyone else. Read-only -
-// this component and everything it renders never writes to Firebase.
-import { useEffect, useRef, useState } from "react";
+// the lowest scorer, and a plain ranked list for everyone else. Scores are
+// derived from `history` for the selected view (current period / all-time /
+// a past period) - read-only, this component and everything it renders
+// never writes to Firebase.
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  CalendarX,
   Crown,
   Spade,
   TriangleAlert,
@@ -17,6 +20,9 @@ import {
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { usePlayers } from "@/hooks/usePlayers";
+import { useHistory } from "@/hooks/useHistory";
+import { aggregatePeriod } from "@/lib/leaderboard";
+import { getCurrentPeriod, listPeriodsInHistory } from "@/lib/periods";
 import type { Player } from "@/types/models";
 
 // Matches the JS animation duration in AnimatedNumber / --duration-slow, so
@@ -33,40 +39,47 @@ function formatSigned(score: number): string {
   return score > 0 ? `+${score}` : `${score}`;
 }
 
-// Tracks which players' totalScore just changed (a live update landed from
+// Tracks which players' view score just changed (a live update landed from
 // elsewhere) and reports back the ids to flash for one pulse cycle.
-function usePulseOnChange(players: Player[]): Set<string> {
+// Switching the active view itself is not a live update - the baseline is
+// re-synced silently on a view change so it never triggers a false pulse.
+function usePulseOnChange(
+  scores: Record<string, number>,
+  viewKey: string,
+): Set<string> {
   const prevScoresRef = useRef<Record<string, number>>({});
+  const prevViewKeyRef = useRef<string>(viewKey);
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [pulsingIds, setPulsingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const previous = prevScoresRef.current;
-    const changedIds = players
-      .filter((player) => {
-        const before = previous[player.id];
-        return before !== undefined && before !== player.totalScore;
-      })
-      .map((player) => player.id);
+    const viewChanged = prevViewKeyRef.current !== viewKey;
+    prevViewKeyRef.current = viewKey;
 
-    if (changedIds.length > 0) {
-      setPulsingIds((current) => new Set([...current, ...changedIds]));
-      for (const id of changedIds) {
-        clearTimeout(timersRef.current[id]);
-        timersRef.current[id] = setTimeout(() => {
-          setPulsingIds((current) => {
-            const next = new Set(current);
-            next.delete(id);
-            return next;
-          });
-        }, PULSE_DURATION_MS);
+    if (!viewChanged) {
+      const previous = prevScoresRef.current;
+      const changedIds = Object.keys(scores).filter((id) => {
+        const before = previous[id];
+        return before !== undefined && before !== scores[id];
+      });
+
+      if (changedIds.length > 0) {
+        setPulsingIds((current) => new Set([...current, ...changedIds]));
+        for (const id of changedIds) {
+          clearTimeout(timersRef.current[id]);
+          timersRef.current[id] = setTimeout(() => {
+            setPulsingIds((current) => {
+              const next = new Set(current);
+              next.delete(id);
+              return next;
+            });
+          }, PULSE_DURATION_MS);
+        }
       }
     }
 
-    prevScoresRef.current = Object.fromEntries(
-      players.map((player) => [player.id, player.totalScore]),
-    );
-  }, [players]);
+    prevScoresRef.current = scores;
+  }, [scores, viewKey]);
 
   useEffect(() => {
     const timers = timersRef.current;
@@ -122,10 +135,14 @@ const PODIUM_STYLE: Record<
 function PodiumCard({
   rank,
   player,
+  score,
+  showLatestScore,
   pulsing,
 }: {
   rank: 1 | 2 | 3;
   player: Player;
+  score: number;
+  showLatestScore: boolean;
   pulsing: boolean;
 }) {
   const style = PODIUM_STYLE[rank];
@@ -167,10 +184,12 @@ function PodiumCard({
         )}
       </div>
       <AnimatedNumber
-        value={player.totalScore}
-        className={`text-lg font-bold tabular-nums sm:text-xl ${scoreTone(player.totalScore)}`}
+        value={score}
+        className={`text-lg font-bold tabular-nums sm:text-xl ${scoreTone(score)}`}
       />
-      <LatestScoreLabel latestScore={player.latestScore} />
+      {showLatestScore ? (
+        <LatestScoreLabel latestScore={player.latestScore} />
+      ) : null}
 
       <div
         className={`flex w-full items-center justify-center rounded-t-lg shadow-card ${style.pedestal} ${style.height} ${pulsing ? "pulse-highlight" : ""}`}
@@ -182,24 +201,28 @@ function PodiumCard({
 }
 
 function Podium({
-  players,
+  entries,
   pulsingIds,
+  showLatestScore,
 }: {
-  players: Player[];
+  entries: Array<{ player: Player; score: number }>;
   pulsingIds: Set<string>;
+  showLatestScore: boolean;
 }) {
   const slots: Array<1 | 2 | 3> = [2, 1, 3];
   return (
     <div className="flex items-end justify-center gap-3 sm:gap-5">
       {slots.map((rank) => {
-        const player = players[rank - 1];
-        if (!player) return null;
+        const entry = entries[rank - 1];
+        if (!entry) return null;
         return (
           <PodiumCard
-            key={player.id}
+            key={entry.player.id}
             rank={rank}
-            player={player}
-            pulsing={pulsingIds.has(player.id)}
+            player={entry.player}
+            score={entry.score}
+            showLatestScore={showLatestScore}
+            pulsing={pulsingIds.has(entry.player.id)}
           />
         );
       })}
@@ -209,9 +232,11 @@ function Podium({
 
 function RoastCallout({
   player,
+  score,
   pulsing,
 }: {
   player: Player;
+  score: number;
   pulsing: boolean;
 }) {
   return (
@@ -236,8 +261,8 @@ function RoastCallout({
         <p className="truncate font-semibold">{player.name}</p>
       </div>
       <AnimatedNumber
-        value={player.totalScore}
-        className={`text-lg font-bold tabular-nums ${scoreTone(player.totalScore)}`}
+        value={score}
+        className={`text-lg font-bold tabular-nums ${scoreTone(score)}`}
       />
     </div>
   );
@@ -245,12 +270,16 @@ function RoastCallout({
 
 function LeaderboardRow({
   player,
+  score,
   rank,
+  showLatestScore,
   pulsing,
   delayMs,
 }: {
   player: Player;
+  score: number;
   rank: number;
+  showLatestScore: boolean;
   pulsing: boolean;
   delayMs: number;
 }) {
@@ -270,11 +299,13 @@ function LeaderboardRow({
             <Ghost className="size-3" /> ผู้ทรงศีล
           </span>
         </div>
-        <LatestScoreLabel latestScore={player.latestScore} />
+        {showLatestScore ? (
+          <LatestScoreLabel latestScore={player.latestScore} />
+        ) : null}
       </div>
       <AnimatedNumber
-        value={player.totalScore}
-        className={`text-base font-bold tabular-nums ${scoreTone(player.totalScore)}`}
+        value={score}
+        className={`text-base font-bold tabular-nums ${scoreTone(score)}`}
       />
     </li>
   );
@@ -336,9 +367,103 @@ function LeaderboardSkeleton() {
   );
 }
 
+// View switcher: a segmented "current period / all-time" toggle plus a
+// dropdown for past periods that actually have rounds in them.
+function ViewSwitcher({
+  viewKey,
+  onChange,
+  currentPeriodKey,
+  pastPeriods,
+}: {
+  viewKey: string;
+  onChange: (key: string) => void;
+  currentPeriodKey: string;
+  pastPeriods: Array<{ key: string; label: string }>;
+}) {
+  const isPastPeriodActive =
+    viewKey !== "all" && viewKey !== currentPeriodKey;
+
+  return (
+    <div className="reveal flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="inline-flex w-fit gap-1 rounded-md border border-border bg-surface-raised p-1">
+        <button
+          type="button"
+          aria-pressed={viewKey === currentPeriodKey}
+          onClick={() => onChange(currentPeriodKey)}
+          className={`rounded px-3 py-1.5 text-sm font-semibold transition-colors ${
+            viewKey === currentPeriodKey
+              ? "bg-accent text-on-accent"
+              : "text-text-muted hover:text-text"
+          }`}
+        >
+          งวดนี้
+        </button>
+        <button
+          type="button"
+          aria-pressed={viewKey === "all"}
+          onClick={() => onChange("all")}
+          className={`rounded px-3 py-1.5 text-sm font-semibold transition-colors ${
+            viewKey === "all"
+              ? "bg-accent text-on-accent"
+              : "text-text-muted hover:text-text"
+          }`}
+        >
+          ตลอดกาล
+        </button>
+      </div>
+
+      {pastPeriods.length > 0 ? (
+        <select
+          aria-label="ดูงวดย้อนหลัง"
+          value={isPastPeriodActive ? viewKey : ""}
+          onChange={(e) => {
+            if (e.target.value) onChange(e.target.value);
+          }}
+          className="rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-text focus:border-border-strong focus:outline-none"
+        >
+          <option value="">ดูงวดย้อนหลัง...</option>
+          {pastPeriods.map((period) => (
+            <option key={period.key} value={period.key}>
+              {period.label}
+            </option>
+          ))}
+        </select>
+      ) : null}
+    </div>
+  );
+}
+
 export function Leaderboard() {
-  const { players, loading, error } = usePlayers();
-  const pulsingIds = usePulseOnChange(players);
+  const { players, loading: playersLoading, error: playersError } = usePlayers();
+  const { history, loading: historyLoading, error: historyError } = useHistory();
+  const loading = playersLoading || historyLoading;
+  const error = playersError ?? historyError;
+
+  const [viewKey, setViewKey] = useState<string>(() => getCurrentPeriod().key);
+  const currentPeriod = getCurrentPeriod();
+
+  const periodsInHistory = useMemo(
+    () => listPeriodsInHistory(history),
+    [history],
+  );
+  const pastPeriods = periodsInHistory.filter(
+    (period) => period.key !== currentPeriod.key,
+  );
+  const selectablePeriods = periodsInHistory.some(
+    (period) => period.key === currentPeriod.key,
+  )
+    ? periodsInHistory
+    : [currentPeriod, ...periodsInHistory];
+  const activePeriod =
+    selectablePeriods.find((period) => period.key === viewKey) ?? null;
+
+  const scores = useMemo(
+    () => aggregatePeriod(history, viewKey),
+    [history, viewKey],
+  );
+  const isViewEmpty = Object.keys(scores).length === 0;
+
+  const pulsingIds = usePulseOnChange(scores, viewKey);
 
   if (loading) {
     return <LeaderboardSkeleton />;
@@ -365,21 +490,56 @@ export function Leaderboard() {
     );
   }
 
-  const allZero = players.every((player) => player.totalScore === 0);
-  if (allZero) {
+  const viewSwitcher = (
+    <ViewSwitcher
+      viewKey={viewKey}
+      onChange={setViewKey}
+      currentPeriodKey={currentPeriod.key}
+      pastPeriods={pastPeriods}
+    />
+  );
+
+  if (isViewEmpty) {
+    // No history at all means every view would be empty, so that gets the
+    // "nobody has played yet" CTA. A single empty period (while other
+    // periods do have data) gets a neutral, period-agnostic empty state -
+    // it must stay period-agnostic because the active view can be a past
+    // period too (its last round can be undone from the history page while
+    // this view is still open).
     return (
-      <StateMessage
-        icon={Spade}
-        title="ยังไม่มีใครลงมือเล่น"
-        description="เริ่มรอบแรกกันเลย พอมีคะแนนแล้วอันดับจะเรียงให้อัตโนมัติ"
-      />
+      <div className="flex flex-col gap-6">
+        <header className="reveal">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            อันดับ
+          </h1>
+        </header>
+        {viewSwitcher}
+        {viewKey === "all" || history.length === 0 ? (
+          <StateMessage
+            icon={Spade}
+            title="ยังไม่มีใครลงมือเล่น"
+            description="เริ่มรอบแรกกันเลย พอมีคะแนนแล้วอันดับจะเรียงให้อัตโนมัติ"
+          />
+        ) : (
+          <StateMessage
+            icon={CalendarX}
+            title="ไม่พบรอบในงวดที่เลือก"
+            description={`ยังไม่มีการบันทึกคะแนนในช่วง ${activePeriod?.label ?? ""} ลองดูงวดอื่นหรือสลับไปดูตลอดกาล`}
+          />
+        )}
+      </div>
     );
   }
 
-  const sorted = [...players].sort((a, b) => b.totalScore - a.totalScore);
-  const podiumPlayers = sorted.slice(0, 3);
-  const restPlayers = sorted.slice(3);
-  const lowestPlayer = sorted[sorted.length - 1];
+  const showLatestScore = viewKey === "all";
+  const scored = players.map((player) => ({
+    player,
+    score: scores[player.id] ?? 0,
+  }));
+  const sorted = [...scored].sort((a, b) => b.score - a.score);
+  const podiumEntries = sorted.slice(0, 3);
+  const restEntries = sorted.slice(3);
+  const lowestEntry = sorted[sorted.length - 1];
   const showRoast = sorted.length >= 2;
 
   return (
@@ -389,36 +549,47 @@ export function Leaderboard() {
           อันดับ
         </h1>
         <p className="text-sm text-text-muted">
-          จัดอันดับสายไพ่ประจำวง เรียงจากคะแนนรวมมากไปน้อย
+          {viewKey === "all"
+            ? "จัดอันดับสายไพ่ประจำวง เรียงจากคะแนนรวมมากไปน้อย"
+            : `งวด ${activePeriod?.label ?? ""}`}
         </p>
       </header>
+
+      {viewSwitcher}
 
       {showRoast ? (
         <div className="overflow-hidden rounded-full border border-danger/30 bg-danger/10 py-1.5 px-3">
           <p className="animate-marquee whitespace-nowrap text-xs font-semibold text-danger">
             <Flame className="mr-1 inline size-3 align-[-0.125em]" aria-hidden />
-            ข่าวด่วน: {sorted[0].name} แบกตี้จนปวดหลัง ส่วน {lowestPlayer.name} ล้มละลาย เตรียมขอกู้เงินนอกระบบ...
+            ข่าวด่วน: {sorted[0].player.name} แบกตี้จนปวดหลัง ส่วน {lowestEntry.player.name} ล้มละลาย เตรียมขอกู้เงินนอกระบบ...
           </p>
         </div>
       ) : null}
 
-      <Podium players={podiumPlayers} pulsingIds={pulsingIds} />
+      <Podium
+        entries={podiumEntries}
+        pulsingIds={pulsingIds}
+        showLatestScore={showLatestScore}
+      />
 
       {showRoast ? (
         <RoastCallout
-          player={lowestPlayer}
-          pulsing={pulsingIds.has(lowestPlayer.id)}
+          player={lowestEntry.player}
+          score={lowestEntry.score}
+          pulsing={pulsingIds.has(lowestEntry.player.id)}
         />
       ) : null}
 
-      {restPlayers.length > 0 ? (
+      {restEntries.length > 0 ? (
         <ul className="flex flex-col gap-2">
-          {restPlayers.map((player, index) => (
+          {restEntries.map((entry, index) => (
             <LeaderboardRow
-              key={player.id}
-              player={player}
+              key={entry.player.id}
+              player={entry.player}
+              score={entry.score}
               rank={index + 4}
-              pulsing={pulsingIds.has(player.id)}
+              showLatestScore={showLatestScore}
+              pulsing={pulsingIds.has(entry.player.id)}
               delayMs={index * 60}
             />
           ))}
