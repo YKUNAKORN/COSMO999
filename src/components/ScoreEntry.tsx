@@ -6,7 +6,14 @@
 // RoundSetup.handleProceed) - deleting someone from the roster mid-entry can
 // no longer drop a stray id into the scores.
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ClipboardCheck, Flame, PartyPopper, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  ClipboardCheck,
+  Flame,
+  MessageSquareHeart,
+  PartyPopper,
+  RotateCcw,
+} from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PreviewDialog } from "@/components/PreviewDialog";
 import { generateRoundCommentary } from "@/lib/commentary";
@@ -157,6 +164,16 @@ export function ScoreEntry({
           <RotateCcw className="size-4" />
           เริ่มรอบใหม่
         </button>
+        <a
+          href="https://forms.gle/BicBxvKyLrqoQHj89"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="แจ้งปัญหา / เสนอไอเดีย (เปิดในแท็บใหม่)"
+          className="flex items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text"
+        >
+          <MessageSquareHeart className="size-4" />
+          แจ้งปัญหา / เสนอไอเดีย
+        </a>
       </section>
     );
   }
