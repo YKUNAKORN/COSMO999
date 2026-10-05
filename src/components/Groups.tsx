@@ -17,6 +17,7 @@ import {
 import { EditGroupDialog } from "@/components/EditGroupDialog";
 import { GroupScoreDialog } from "@/components/GroupScoreDialog";
 import { useGroups } from "@/hooks/useGroups";
+import { useHistory } from "@/hooks/useHistory";
 import { usePlayers } from "@/hooks/usePlayers";
 import { deleteGroup, renameGroup } from "@/lib/groups";
 import type { Group, Player } from "@/types/models";
@@ -115,6 +116,7 @@ export function Groups() {
   const router = useRouter();
   const { groups, loading, error } = useGroups();
   const { players } = usePlayers();
+  const { history, loading: historyLoading, error: historyError } = useHistory();
 
   // groupId of the group whose score dialog is open; null = closed.
   const [scoreGroupId, setScoreGroupId] = useState<string | null>(null);
@@ -248,6 +250,7 @@ export function Groups() {
         <GroupScoreDialog
           group={scoreGroup}
           players={players}
+          history={historyLoading || historyError ? null : history}
           onClose={() => setScoreGroupId(null)}
         />
       ) : null}

@@ -3,12 +3,24 @@
 // Per-group leaderboard dialog. Ported from legacy showGroupScore
 // (reference/legacy-prototype.sanitized.html L1484-1526).
 // Read-only: shows each member's accumulated score within this group,
-// sorted highest-first. Deleted players are shown as "(ถูกลบ)".
+// sorted highest-first, with the group's round count, per-member win/loss
+// record and nickname badges (computed in lib/groupStats.ts). Deleted players
+// are shown as "(ถูกลบ)".
 // Built on native <dialog> (same pattern as PreviewDialog).
-import { useEffect, useRef } from "react";
-import { BarChart2, X } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import {
+  BarChart2,
+  Crown,
+  Gamepad2,
+  PiggyBank,
+  Target,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import type { Group, Player } from "@/types/models";
+import { formatNumber } from "@/lib/format";
+import { computeGroupStats } from "@/lib/groupStats";
+import type { Group, HistoryEntry, Player } from "@/types/models";
 
 // Colour token for a numeric score value.
 function scoreTone(score: number): string {
@@ -30,16 +42,43 @@ function rankTone(rank: number): string {
   return "text-text-muted";
 }
 
+function Badge({
+  icon: Icon,
+  label,
+  className,
+}: {
+  icon: LucideIcon;
+  label: string;
+  className: string;
+}) {
+  return (
+    <span
+      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold leading-tight ${className}`}
+    >
+      <Icon className="size-3 shrink-0" aria-hidden />
+      {label}
+    </span>
+  );
+}
+
 export function GroupScoreDialog({
   group,
   players,
+  history,
   onClose,
 }: {
   group: Group;
   players: Player[];
+  // null while history is still loading (or failed to load): the score list
+  // renders as before and the round/win-loss/badge extras are left out.
+  history: HistoryEntry[] | null;
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const stats = useMemo(
+    () => (history ? computeGroupStats(group, history) : null),
+    [group, history],
+  );
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -76,16 +115,24 @@ export function GroupScoreDialog({
         if (event.target === event.currentTarget) dismiss();
       }}
       aria-labelledby="group-score-title"
-      className="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-lg border border-border-strong bg-surface p-0 text-text shadow-gold backdrop:bg-black/60"
+      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-border-strong bg-surface p-0 text-text shadow-gold backdrop:bg-black/60"
     >
       <div className="flex flex-col gap-4 p-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="size-5 shrink-0 text-accent" aria-hidden />
-            <h2 id="group-score-title" className="text-base font-semibold leading-snug">
-              คะแนนรวมกลุ่ม: {group.name}
-            </h2>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="size-5 shrink-0 text-accent" aria-hidden />
+              <h2 id="group-score-title" className="text-base font-semibold leading-snug">
+                คะแนนรวมกลุ่ม: {group.name}
+              </h2>
+            </div>
+            {stats ? (
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-text-muted">
+                <Gamepad2 className="size-3.5 shrink-0" aria-hidden />
+                ดวลกันไปแล้วทั้งหมด {formatNumber(stats.totalRounds)} รอบ
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -101,6 +148,10 @@ export function GroupScoreDialog({
         <ol className="flex flex-col gap-2">
           {ranked.map(({ pId, player, score }, index) => {
             const rank = index + 1;
+            const record = stats?.records[pId];
+            const isLeader = stats?.leaderIds.includes(pId) ?? false;
+            const isLastPlace = stats?.lastPlaceIds.includes(pId) ?? false;
+            const isNemesis = stats?.nemesisIds.includes(pId) ?? false;
             return (
               <li
                 key={pId}
@@ -122,10 +173,45 @@ export function GroupScoreDialog({
                   </span>
                 )}
 
-                {/* Name */}
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                  {player ? player.name : "(ถูกลบ)"}
-                </span>
+                {/* Name, nickname badges, win/loss record */}
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">
+                    {player ? player.name : "(ถูกลบ)"}
+                  </span>
+                  {isLeader || isLastPlace || isNemesis ? (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {isLeader ? (
+                        <Badge
+                          icon={Crown}
+                          label="เจ้ามือประจำกลุ่ม"
+                          className="bg-accent/20 text-accent"
+                        />
+                      ) : null}
+                      {isLastPlace ? (
+                        <Badge
+                          icon={PiggyBank}
+                          label="สปอนเซอร์กลุ่ม"
+                          className="bg-danger/15 text-danger"
+                        />
+                      ) : null}
+                      {isNemesis ? (
+                        <Badge
+                          icon={Target}
+                          label="มือปราบแชมป์"
+                          className="bg-text/10 text-text"
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {record ? (
+                    <p className="mt-0.5 text-xs tabular-nums text-text-muted">
+                      ชนะ {record.wins} • แพ้ {record.losses}
+                      {record.winRate !== null
+                        ? ` (${Math.round(record.winRate)}%)`
+                        : ""}
+                    </p>
+                  ) : null}
+                </div>
 
                 {/* Score */}
                 <span

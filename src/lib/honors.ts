@@ -5,14 +5,30 @@
 // undoing a past round changes its outcome automatically on the next call.
 
 import { aggregatePeriod } from "@/lib/leaderboard";
-import { getCurrentPeriod, listPeriodsInHistory, type Period } from "@/lib/periods";
+import {
+  getCurrentPeriod,
+  getPeriodOfTimestamp,
+  listPeriodsInHistory,
+  type Period,
+} from "@/lib/periods";
 import type { HistoryEntry } from "@/types/models";
 
 export interface PeriodResult {
   period: Period;
   championIds: string[];
   lastPlaceIds: string[];
+  // Net period score shared by every co-champion / co-last-place player.
+  championScore: number;
+  lastPlaceScore: number;
+  // Rounds saved in the period, and distinct players who scored in them.
+  roundCount: number;
+  playerCount: number;
 }
+
+type RankedPeriod = Pick<
+  PeriodResult,
+  "championIds" | "lastPlaceIds" | "championScore" | "lastPlaceScore" | "playerCount"
+>;
 
 // A period needs at least this many distinct players with a scored round in
 // it before it can crown anyone - matches the legacy renderTopStats
@@ -30,9 +46,7 @@ const MIN_PLAYERS_FOR_RESULT = 2;
 // every player in a period shares one score, that score can only be 0 -
 // without this guard the same players would be returned as both champion
 // and last place.
-function rankPeriod(
-  scores: Record<string, number>,
-): Pick<PeriodResult, "championIds" | "lastPlaceIds"> | null {
+function rankPeriod(scores: Record<string, number>): RankedPeriod | null {
   const entries = Object.entries(scores);
   if (entries.length < MIN_PLAYERS_FOR_RESULT) return null;
 
@@ -44,6 +58,9 @@ function rankPeriod(
   return {
     championIds: entries.filter(([, score]) => score === highest).map(([id]) => id),
     lastPlaceIds: entries.filter(([, score]) => score === lowest).map(([id]) => id),
+    championScore: highest,
+    lastPlaceScore: lowest,
+    playerCount: entries.length,
   };
 }
 
@@ -54,11 +71,17 @@ export function getHallOfFame(history: HistoryEntry[]): PeriodResult[] {
   const currentKey = getCurrentPeriod().key;
   const results: PeriodResult[] = [];
 
+  const roundCounts: Record<string, number> = {};
+  for (const entry of history) {
+    const key = getPeriodOfTimestamp(entry.timestamp).key;
+    roundCounts[key] = (roundCounts[key] ?? 0) + 1;
+  }
+
   for (const period of listPeriodsInHistory(history)) {
     if (period.key === currentKey) continue;
     const ranked = rankPeriod(aggregatePeriod(history, period.key));
     if (!ranked) continue;
-    results.push({ period, ...ranked });
+    results.push({ period, roundCount: roundCounts[period.key] ?? 0, ...ranked });
   }
 
   return results;
