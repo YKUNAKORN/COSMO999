@@ -19,6 +19,7 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { useHistory } from "@/hooks/useHistory";
 import { usePlayers } from "@/hooks/usePlayers";
+import { formatSignedScore } from "@/lib/format";
 import { computePlayerStats } from "@/lib/stats";
 import type { RoundDataPoint } from "@/lib/stats";
 
@@ -82,15 +83,18 @@ function roundDotColour(score: number): string {
   return cssVar("--color-ivory-400", "#a8a291");
 }
 
-// Stat card: label + large value + optional sub-label.
+// Stat card: label + large value. `valueClassName` swaps the big-number
+// styling for cards whose value is a row of tags instead.
 function StatCard({
   label,
   children,
   tone,
+  valueClassName = "text-2xl font-bold tabular-nums",
 }: {
   label: string;
   children: React.ReactNode;
   tone?: "positive" | "negative" | "neutral";
+  valueClassName?: string;
 }) {
   const toneClass =
     tone === "positive"
@@ -102,9 +106,7 @@ function StatCard({
   return (
     <div className="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4">
       <span className="text-xs text-text-muted">{label}</span>
-      <span className={`text-2xl font-bold tabular-nums ${toneClass}`}>
-        {children}
-      </span>
+      <span className={`${valueClassName} ${toneClass}`}>{children}</span>
     </div>
   );
 }
@@ -231,7 +233,7 @@ export function Stats() {
                     <p className="text-xs text-text-muted">ข้อมูลสถิติของ</p>
                     <p className="text-lg font-bold">{selectedPlayer.name}</p>
                     <p
-                      className={`text-sm font-semibold tabular-nums ${
+                      className={`text-base font-bold tabular-nums ${
                         stats.totalScore > 0
                           ? "text-success"
                           : stats.totalScore < 0
@@ -239,7 +241,10 @@ export function Stats() {
                             : "text-text-muted"
                       }`}
                     >
-                      <AnimatedNumber value={stats.totalScore} /> คะแนน
+                      <AnimatedNumber value={stats.totalScore} grouped /> คะแนน
+                    </p>
+                    <p className="text-xs tabular-nums text-text-muted">
+                      (คะแนนดิบ: {formatSignedScore(stats.rawTotal)})
                     </p>
                   </div>
                 </div>
@@ -274,17 +279,22 @@ export function Stats() {
                     <span>{stats.zeros}</span>
                   </span>
                 </StatCard>
-                <StatCard label="คะแนนสะสม">
-                  <AnimatedNumber
-                    value={stats.totalScore}
-                    className={
-                      stats.totalScore > 0
-                        ? "text-success"
-                        : stats.totalScore < 0
-                          ? "text-danger"
-                          : "text-text-muted"
-                    }
-                  />
+                <StatCard
+                  label="ตัวคูณที่ชนะ (ครั้ง)"
+                  valueClassName="flex flex-wrap gap-1.5 text-xs font-semibold tabular-nums"
+                >
+                  {stats.multiplierWins.length > 0 ? (
+                    stats.multiplierWins.map(({ multiplier, count }) => (
+                      <span
+                        key={multiplier}
+                        className="rounded-full bg-accent/20 px-2 py-0.5 text-accent"
+                      >
+                        x{multiplier} ({count})
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-2xl font-bold text-text-muted">-</span>
+                  )}
                 </StatCard>
               </div>
 

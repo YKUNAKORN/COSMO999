@@ -68,13 +68,6 @@ function PlayerRow({ player }: { player: Player }) {
     }
   }
 
-  const scoreTone =
-    player.totalScore > 0
-      ? "text-accent"
-      : player.totalScore < 0
-        ? "text-suit-red"
-        : "text-text-muted";
-
   return (
     <li className="rounded-lg border border-border bg-surface p-4 shadow-card">
       <div className="flex items-center gap-3">
@@ -92,13 +85,7 @@ function PlayerRow({ player }: { player: Player }) {
             className="min-w-0 flex-1 rounded-md border border-border bg-bg px-3 py-2 text-base outline-none focus:border-border-strong"
           />
         ) : (
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{player.name}</p>
-            <p className={`text-sm tabular-nums ${scoreTone}`}>
-              คะแนนรวม {player.totalScore > 0 ? "+" : ""}
-              {player.totalScore}
-            </p>
-          </div>
+          <p className="min-w-0 flex-1 truncate font-medium">{player.name}</p>
         )}
 
         <div className="flex shrink-0 items-center gap-1">

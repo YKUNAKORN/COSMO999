@@ -16,11 +16,41 @@ export interface CumulativeDataPoint {
   cumulative: number;
 }
 
+export type RoundResult = "win" | "loss" | "other";
+
+// How one player's score reads within one round. A win is topping the round
+// with a positive score (every player tied for the top counts); a loss
+// is any negative score; everything else (middle of the pack, or a round
+// where everyone drew on 0) is "other". Shared by the player stats and the
+// per-group stats so both agree on what "ชนะ" means.
+export function getRoundResult(
+  score: number,
+  playerScores: Record<string, number>,
+): RoundResult {
+  const best = Math.max(...Object.values(playerScores));
+  if (score > 0 && score === best) return "win";
+  if (score < 0) return "loss";
+  return "other";
+}
+
+// History stores only the multiplied net score, so the pre-multiplier ("raw")
+// score is recovered by dividing the multiplier back out. A missing or
+// non-positive multiplier is never written by the app; it is read as x1 here
+// rather than dividing by zero.
+export function toRawScore(netScore: number, multiplier: number): number {
+  return netScore / (multiplier > 0 ? multiplier : 1);
+}
+
+export interface MultiplierWinCount {
+  multiplier: number;
+  count: number;
+}
+
 export interface PlayerStats {
   totalRounds: number;
-  wins: number; // rounds where score > 0
+  wins: number; // rounds won (see getRoundResult)
   losses: number; // rounds where score < 0
-  zeros: number; // rounds where score === 0
+  zeros: number; // every other round (middle finish or an all-zero draw)
   // wins/(wins+losses)*100, or 0 when both are 0 (guard against divide-by-zero).
   winRate: number;
   // Max single-round score, clamped to 0 when no rounds played.
@@ -29,6 +59,11 @@ export interface PlayerStats {
   worstRound: number;
   // Sum of all round scores (same as player.totalScore for this subset).
   totalScore: number;
+  // Sum of the same scores before each round's multiplier was applied.
+  rawTotal: number;
+  // Rounds won, bucketed by multiplier, smallest multiplier first. Empty when
+  // the player has never won. Sums to `wins`.
+  multiplierWins: MultiplierWinCount[];
 
   // Chart data: last 10 rounds sorted oldest-first (matches legacy L1297-1319).
   roundData: RoundDataPoint[];
@@ -59,22 +94,37 @@ export function computePlayerStats(
   let losses = 0;
   let zeros = 0;
   let totalScore = 0;
+  let rawTotal = 0;
+  const winsByMultiplier = new Map<number, number>();
   const fullCumulative: number[] = [];
 
   for (const round of rounds) {
     const score = round.playerScores[playerId];
-    const maxScore = Math.max(...Object.values(round.playerScores));
-    
+
     totalScore += score;
+    rawTotal += toRawScore(score, round.multiplier);
     fullCumulative.push(totalScore);
 
     if (score > bestRound) bestRound = score;
     if (score < worstRound) worstRound = score;
 
-    if (score === maxScore) wins++;
-    else if (score < 0) losses++;
-    else zeros++;
+    const result = getRoundResult(score, round.playerScores);
+    if (result === "win") {
+      wins++;
+      winsByMultiplier.set(
+        round.multiplier,
+        (winsByMultiplier.get(round.multiplier) ?? 0) + 1,
+      );
+    } else if (result === "loss") {
+      losses++;
+    } else {
+      zeros++;
+    }
   }
+
+  const multiplierWins: MultiplierWinCount[] = [...winsByMultiplier]
+    .map(([multiplier, count]) => ({ multiplier, count }))
+    .sort((a, b) => a.multiplier - b.multiplier);
 
   // Clamp ±Infinity guards (matches legacy L1251-1252).
   if (bestRound === -Infinity) bestRound = 0;
@@ -120,6 +170,8 @@ export function computePlayerStats(
     bestRound,
     worstRound,
     totalScore,
+    rawTotal,
+    multiplierWins,
     roundData,
     cumulativeData,
   };

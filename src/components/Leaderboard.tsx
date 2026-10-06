@@ -12,7 +12,6 @@ import {
   Crown,
   Medal,
   Spade,
-  TrendingDown,
   TriangleAlert,
   Trophy,
   Users,
@@ -22,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
+import { HallOfFameCard } from "@/components/HallOfFameCard";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useHistory } from "@/hooks/useHistory";
@@ -511,89 +511,6 @@ function TabSwitcher({
   );
 }
 
-// One honoree group (either the champions or the last-place finishers) for a
-// single Hall of Fame period entry. Champions get the same gold-glow ring the
-// live podium gives its rank-1 card, so "you were #1" reads the same way
-// whether it happened just now or three periods ago.
-function HonoreeGroup({
-  icon: Icon,
-  tone,
-  label,
-  ids,
-  players,
-}: {
-  icon: LucideIcon;
-  tone: "accent" | "danger";
-  label: string;
-  ids: string[];
-  players: Player[];
-}) {
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      className="flex flex-1 flex-wrap items-center gap-2"
-    >
-      <Icon
-        className={`size-4 shrink-0 ${tone === "accent" ? "text-accent" : "text-danger"}`}
-        aria-hidden
-      />
-      {ids.map((id) => {
-        const player = players.find((p) => p.id === id);
-        return (
-          <span key={id} className="flex items-center gap-1.5">
-            {player ? (
-              <span className={tone === "accent" ? "rounded-full shadow-gold" : ""}>
-                <PlayerAvatar player={player} className="size-6 text-xs" />
-              </span>
-            ) : null}
-            <span className="text-sm font-medium">
-              {player ? player.name : "(ถูกลบ)"}
-            </span>
-          </span>
-        );
-      })}
-    </div>
-  );
-}
-
-function HallOfFameEntry({
-  result,
-  players,
-  delayMs,
-}: {
-  result: PeriodResult;
-  players: Player[];
-  delayMs: number;
-}) {
-  return (
-    <li
-      className="reveal flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-card"
-      style={{ animationDelay: `${delayMs}ms` }}
-    >
-      <p className="text-sm font-semibold text-text-muted">
-        งวด {result.period.label}
-      </p>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <HonoreeGroup
-          icon={Crown}
-          tone="accent"
-          label="แชมป์ประจำงวด"
-          ids={result.championIds}
-          players={players}
-        />
-        <HonoreeGroup
-          icon={TrendingDown}
-          tone="danger"
-          label="อันดับสุดท้ายประจำงวด"
-          ids={result.lastPlaceIds}
-          players={players}
-        />
-      </div>
-    </li>
-  );
-}
-
 function HallOfFame({
   results,
   players,
@@ -621,7 +538,7 @@ function HallOfFame({
       ) : (
         <ul className="flex flex-col gap-3">
           {results.map((result, index) => (
-            <HallOfFameEntry
+            <HallOfFameCard
               key={result.period.key}
               result={result}
               players={players}
@@ -664,7 +581,20 @@ export function Leaderboard() {
     () => aggregatePeriod(history, viewKey),
     [history, viewKey],
   );
-  const isViewEmpty = Object.keys(scores).length === 0;
+  // Period views hide players with no round in that period (they would
+  // only add 0-score noise). A player who played and finished on exactly 0
+  // is in `scores` and stays. The all-time view keeps everyone.
+  const visiblePlayers = useMemo(
+    () =>
+      viewKey === "all"
+        ? players
+        : players.filter((player) => scores[player.id] !== undefined),
+    [players, scores, viewKey],
+  );
+  const isViewEmpty =
+    viewKey === "all"
+      ? Object.keys(scores).length === 0
+      : visiblePlayers.length === 0;
   const trophyCounts = useMemo(() => getTrophyCounts(history), [history]);
   const hallOfFame = useMemo(() => getHallOfFame(history), [history]);
 
@@ -751,7 +681,7 @@ export function Leaderboard() {
   }
 
   const showLatestScore = viewKey === "all";
-  const scored = players.map((player) => ({
+  const scored = visiblePlayers.map((player) => ({
     player,
     score: scores[player.id] ?? 0,
     championCount: trophyCounts[player.id]?.championCount ?? 0,

@@ -7,6 +7,7 @@
 // straight to the target with no animation when the visitor has
 // prefers-reduced-motion set.
 import { useEffect, useRef, useState } from "react";
+import { formatSignedScore } from "@/lib/format";
 
 const DURATION_MS = 520;
 
@@ -24,9 +25,12 @@ function prefersReducedMotion(): boolean {
 export function AnimatedNumber({
   value,
   className,
+  grouped = false,
 }: {
   value: number;
   className?: string;
+  // Show thousands separators ("+18,580") instead of the bare digits.
+  grouped?: boolean;
 }) {
   const [displayValue, setDisplayValue] = useState(0);
   // Mirrors displayValue outside React state so a value change that
@@ -71,8 +75,14 @@ export function AnimatedNumber({
 
   return (
     <span className={className}>
-      {rounded > 0 ? "+" : ""}
-      {rounded}
+      {grouped ? (
+        formatSignedScore(rounded)
+      ) : (
+        <>
+          {rounded > 0 ? "+" : ""}
+          {rounded}
+        </>
+      )}
     </span>
   );
 }
