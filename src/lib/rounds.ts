@@ -149,11 +149,15 @@ export async function undoRound(matchId: string): Promise<SaveRoundResult> {
     const result = await runTransaction(
       ref(database, DB_PATHS.root),
       (currentData: unknown) => {
-        // Abort (return undefined) if the entry is already gone - another
-        // client may have undone it between the dialog open and the confirm.
-        // Firebase treats undefined as "abort this transaction cleanly".
+        // Firebase transactions often run with null on the first local pass.
+        // If we return undefined here, the transaction aborts locally without
+        // ever reaching the server. Instead, return currentData to force a
+        // server round-trip. If the server is actually empty or missing the
+        // entry, writing currentData back is a safe no-op that resolves the
+        // transaction successfully (since the end goal - the round being gone
+        // - is already met).
         if (currentData === null || typeof currentData !== "object") {
-          return undefined;
+          return currentData;
         }
         const raw = currentData as Record<string, unknown>;
         const rawHistory = raw.history;
@@ -162,7 +166,7 @@ export async function undoRound(matchId: string): Promise<SaveRoundResult> {
           typeof rawHistory !== "object" ||
           !(matchId in (rawHistory as Record<string, unknown>))
         ) {
-          return undefined;
+          return currentData;
         }
 
         const room = normalizeRoom(currentData);

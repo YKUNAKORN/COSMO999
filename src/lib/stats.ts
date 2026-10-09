@@ -27,9 +27,12 @@ export function getRoundResult(
   score: number,
   playerScores: Record<string, number>,
 ): RoundResult {
-  const best = Math.max(...Object.values(playerScores));
+  const values = Object.values(playerScores);
+  const best = Math.max(...values);
+  const worst = Math.min(...values);
+  
   if (score > 0 && score === best) return "win";
-  if (score < 0) return "loss";
+  if (score < 0 && score === worst) return "loss";
   return "other";
 }
 
@@ -49,9 +52,9 @@ export interface MultiplierWinCount {
 export interface PlayerStats {
   totalRounds: number;
   wins: number; // rounds won (see getRoundResult)
-  losses: number; // rounds where score < 0
+  losses: number; // rounds where score < 0 and is the lowest
   zeros: number; // every other round (middle finish or an all-zero draw)
-  // wins/(wins+losses)*100, or 0 when both are 0 (guard against divide-by-zero).
+  // Percentage of rounds won out of all rounds played.
   winRate: number;
   // Max single-round score, clamped to 0 when no rounds played.
   bestRound: number;
@@ -130,9 +133,8 @@ export function computePlayerStats(
   if (bestRound === -Infinity) bestRound = 0;
   if (worstRound === Infinity) worstRound = 0;
 
-  // Win rate: exclude zero-score rounds from the denominator (matches legacy
-  // L1246-1249). Guard: 0/0 → 0, not NaN.
-  const winRate = wins + losses > 0 ? (wins / (wins + losses)) * 100 : 0;
+  // Win rate: wins / total rounds played
+  const winRate = rounds.length > 0 ? (wins / rounds.length) * 100 : 0;
 
   // --- Build chart data ---
   // Limit to the last 10 rounds (matches legacy L1297-1299).

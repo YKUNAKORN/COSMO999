@@ -270,13 +270,11 @@ export function Stats() {
                 <StatCard label="ต่ำสุดที่เคยทำ" tone="negative">
                   <AnimatedNumber value={stats.worstRound} />
                 </StatCard>
-                <StatCard label="ชนะ / แพ้ / เสมอ" tone="neutral">
+                <StatCard label="ชนะ / แพ้" tone="neutral">
                   <span className="text-xl">
                     <span className="text-success">{stats.wins}</span>
                     <span className="text-text-muted text-sm"> / </span>
                     <span className="text-danger">{stats.losses}</span>
-                    <span className="text-text-muted text-sm"> / </span>
-                    <span>{stats.zeros}</span>
                   </span>
                 </StatCard>
                 <StatCard
