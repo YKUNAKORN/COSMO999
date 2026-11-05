@@ -3,7 +3,7 @@
 // Ported from legacy renderPlayerStats (reference/legacy-prototype.sanitized.html
 // L1197-1419). All edge-case guards (divide-by-zero, ±Infinity, empty list)
 // match the legacy behaviour exactly.
-import { getPeriodOfTimestamp } from "@/lib/periods";
+import { getPeriodOfTimestamp } from "./periods.ts";
 import type { HistoryEntry } from "@/types/models";
 
 // Chart data point shapes for recharts.

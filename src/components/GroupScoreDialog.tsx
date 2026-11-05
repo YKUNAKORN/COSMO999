@@ -145,6 +145,12 @@ export function GroupScoreDialog({
           })}
         </ol>
 
+        {stats && stats.playedTogetherRounds > stats.totalRounds ? (
+          <p className="text-center text-xs tabular-nums text-[#8E8E93] dark:text-[#98989D]">
+            เล่นด้วยกันทั้งหมด {formatNumber(stats.playedTogetherRounds)} รอบ (รวมรอบที่มีผู้เล่นคนอื่นร่วมด้วย)
+          </p>
+        ) : null}
+
         {/* Close button */}
         <button
           type="button"

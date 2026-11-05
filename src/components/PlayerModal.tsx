@@ -9,6 +9,7 @@ import { Check, Crop, ImagePlus, Loader2, Pencil, Trash2, UserPlus, X } from "lu
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
 import { GlobalModal } from "@/components/GlobalModal";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { uploadAvatar } from "@/lib/avatarStorage";
 import { createPlayer, updatePlayer } from "@/lib/players";
 import type { Player } from "@/types/models";
 
@@ -140,7 +141,9 @@ export function PlayerModal({
       // Determine final avatar: photo or boring avatar
       let finalImage = "";
       if (avatarMode === "photo" && previewImage) {
-        finalImage = previewImage;
+        // Moves a freshly picked photo to Storage; falls back to the inline
+        // data URL if Storage is unavailable. Existing http(s) URLs pass through.
+        finalImage = await uploadAvatar(previewImage);
       } else {
         finalImage = "boring:beam";
       }

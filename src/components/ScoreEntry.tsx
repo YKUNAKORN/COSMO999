@@ -24,7 +24,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { ScoreKeypad } from "@/components/ScoreKeypad";
 import { generateRoundCommentary } from "@/lib/commentary";
 import { formatSignedScore, scoreTone } from "@/lib/format";
-import { saveRound } from "@/lib/rounds";
+import { newMatchId, saveRound } from "@/lib/rounds";
 import { calculateRoundScores, getRandomMultiplier } from "@/lib/scoring";
 import { useHistory } from "@/hooks/useHistory";
 import type { Player } from "@/types/models";
@@ -62,21 +62,18 @@ export function ScoreEntry({
   players,
   multiplier,
   triggerReveal = false,
-  liveSessionActive = false,
-  sessionId,
   onBack,
   onReset,
 }: {
   players: Player[];
   multiplier: number;
   triggerReveal?: boolean;
-  liveSessionActive?: boolean;
-  sessionId?: string;
   onBack: () => void;
   onReset: () => void;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const pendingMatchIdRef = useRef<{ id: string; signature: string } | null>(null);
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(multiplier);
   const [revealCount, setRevealCount] = useState<number>(triggerReveal ? 1 : 0);
   const [displayMultiplier, setDisplayMultiplier] = useState<number>(
@@ -205,13 +202,24 @@ export function ScoreEntry({
     setSaveState({ status: "saving" });
     const commentary = generateRoundCommentary(result.netScores, players, history);
 
+    // Reuse the same id across retries of this round: if an earlier attempt
+    // timed out on the client but still committed, the retry is a no-op
+    // instead of recording the round twice.
+    // The id is only reused when the scores are unchanged: if the user edits
+    // the numbers before retrying, that is a different round and gets a new id.
+    const signature = JSON.stringify([result.netScores, currentMultiplier]);
+    if (pendingMatchIdRef.current?.signature !== signature) {
+      pendingMatchIdRef.current = { id: newMatchId(), signature };
+    }
     const outcome = await saveRound({
       playerIds: players.map((player) => player.id),
       netScores: result.netScores,
       multiplier: currentMultiplier,
       commentary,
-      sessionId,
+      matchId: pendingMatchIdRef.current.id,
     });
+
+    if (outcome.committed) pendingMatchIdRef.current = null;
 
     if (!outcome.committed) {
       setSaveState({
@@ -427,27 +435,18 @@ export function ScoreEntry({
           </ul>
 
           <div className="flex flex-col gap-2.5 w-full mt-1">
-            {liveSessionActive ? (
-              <Button onClick={handleReturnHome}>
-                <RotateCcw className="size-4.5" />
-                กลับไปที่โต๊ะ (ดูผลรวม)
-              </Button>
-            ) : (
-              <>
-                <Button onClick={handlePlaySameGroupAgain}>
-                  <RotateCcw className="size-4.5" />
-                  เริ่มรอบใหม่
-                </Button>
-                <Button variant="secondary" onClick={handleGoToLeaderboard}>
-                  <Trophy className="size-4.5" />
-                  อันดับ
-                </Button>
-                <Button variant="secondary" onClick={handleReturnHome}>
-                  <Home className="size-4.5" />
-                  กลับหน้าหลัก
-                </Button>
-              </>
-            )}
+            <Button onClick={handlePlaySameGroupAgain}>
+              <RotateCcw className="size-4.5" />
+              เริ่มรอบใหม่
+            </Button>
+            <Button variant="secondary" onClick={handleGoToLeaderboard}>
+              <Trophy className="size-4.5" />
+              อันดับ
+            </Button>
+            <Button variant="secondary" onClick={handleReturnHome}>
+              <Home className="size-4.5" />
+              กลับหน้าหลัก
+            </Button>
           </div>
         </div>
       ) : (

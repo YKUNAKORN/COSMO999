@@ -197,7 +197,8 @@ export function Groups() {
     try {
       await deleteGroup(editGroupId);
       setEditGroupId(null);
-    } catch {
+    } catch (error) {
+      console.error("[groups] delete failed", error);
       setEditError("ลบกลุ่มไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
     } finally {
       setEditBusy(false);

@@ -1,18 +1,22 @@
 // Per-group stats for the group score dialog. Pure and read-only: derived from
 // the group's stored scores plus the history rows that carry its groupId.
-import { getRoundResult } from "@/lib/stats";
+import { getRoundResult } from "./stats.ts";
 import type { Group, HistoryEntry } from "@/types/models";
 
 export interface MemberRecord {
   wins: number;
   losses: number;
-  // wins / (wins + losses) as a 0-100 percentage; null when neither exists
-  // yet (same exclusion of other rounds as the player stats page).
+  // wins / rounds played as a 0-100 percentage (middle finishes count as
+  // played, matching the player stats page); null when no rounds were played.
   winRate: number | null;
 }
 
 export interface GroupStats {
   totalRounds: number;
+  // Rounds (in any group) where every member of this group played, including
+  // rounds with extra players. >= totalRounds, since groups are keyed by the
+  // exact player set.
+  playedTogetherRounds: number;
   records: Record<string, MemberRecord>;
   // Highest and lowest group score. Ties are kept (every tied member is
   // listed). Both are empty when the group is level, e.g. no rounds yet.
@@ -100,8 +104,13 @@ export function computeGroupStats(
       ? challengers.filter((id) => tallies[id].nemesisWins === mostNemesisWins)
       : [];
 
+  const playedTogetherRounds = history.filter((entry) =>
+    group.playerIds.every((id) => entry.playerScores[id] !== undefined),
+  ).length;
+
   return {
     totalRounds: rounds.length,
+    playedTogetherRounds,
     records,
     leaderIds,
     lastPlaceIds,
