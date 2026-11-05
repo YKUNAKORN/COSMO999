@@ -1,6 +1,12 @@
 // Realtime Database read layer: live list subscriptions plus a one-shot
 // read. Writes live in the per-entity modules (see players.ts).
-import { get, onValue, ref, type DataSnapshot } from "firebase/database";
+import {
+  get,
+  onValue,
+  ref,
+  runTransaction,
+  type DataSnapshot,
+} from "firebase/database";
 import { database } from "./firebase";
 
 // Legacy quirk: dummyRoom/players and dummyRoom/groups were saved as JSON
@@ -43,6 +49,24 @@ export function subscribeToList<T>(
   return onError
     ? onValue(listRef, handleValue, onError)
     : onValue(listRef, handleValue);
+}
+
+/**
+ * Read-modify-write the list at `path` inside a transaction, so concurrent
+ * edits (e.g. a round being saved while a player is renamed) cannot overwrite
+ * each other with a stale copy. The list is stored as an array, matching the
+ * legacy layout. Throws if the transaction does not commit.
+ */
+export async function updateList<T>(
+  path: string,
+  update: (items: T[]) => T[],
+): Promise<void> {
+  const result = await runTransaction(ref(database, path), (current: unknown) =>
+    update(normalizeList<T>(current)),
+  );
+  if (!result.committed) {
+    throw new Error("บันทึกไม่สำเร็จ กรุณาลองใหม่");
+  }
 }
 
 /**

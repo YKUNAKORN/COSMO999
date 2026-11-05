@@ -9,11 +9,10 @@
 // - Apple typography: font-semibold tracking-tight text-[#1C1C1E] & text-[#8E8E93]
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Play, Radio } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { MultiplierPicker } from "@/components/MultiplierPicker";
 import { RoundPlayerSelect } from "@/components/RoundPlayerSelect";
 import { ScoreEntry } from "@/components/ScoreEntry";
-import { ENABLE_LIVE_SESSION } from "@/lib/features";
 import { getRandomMultiplier } from "@/lib/scoring";
 import type { HistoryEntry, Player } from "@/types/models";
 
@@ -44,23 +43,10 @@ export interface RoundSetupProps {
   history: HistoryEntry[];
   loading: boolean;
   presetTrigger?: PresetTrigger | null;
-  isLive?: boolean;
-  liveRoundCount?: number;
-  onOpenLiveSession?: () => void;
-  onStartLiveSession?: () => void;
 }
 
 function RoundSetupInner(props: RoundSetupProps) {
-  const {
-    players,
-    history,
-    loading,
-    presetTrigger,
-    isLive = false,
-    liveRoundCount = 0,
-    onOpenLiveSession,
-    onStartLiveSession,
-  } = props;
+  const { players, history, loading, presetTrigger } = props;
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -188,28 +174,6 @@ function RoundSetupInner(props: RoundSetupProps) {
           </h2>
         </div>
 
-        {/* Live Session pill beside "เริ่มเกม" - hidden unless the feature is on */}
-        {ENABLE_LIVE_SESSION ? (
-          isLive ? (
-            <button
-              type="button"
-              onClick={onOpenLiveSession}
-              className="flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-50 dark:bg-green-950/40 hover:bg-green-100 dark:hover:bg-green-950/60 ios-spring-button text-[#34C759] text-xs font-bold px-3 py-1.5 transition-all cursor-pointer shadow-xs"
-            >
-              <span className="size-2 rounded-full bg-[#34C759] animate-pulse" />
-              <span>เข้าสู่โต๊ะ (รอบที่ {liveRoundCount})</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onStartLiveSession}
-              className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-50 dark:bg-blue-950/40 text-[#007AFF] dark:text-[#2E8BFF] hover:bg-blue-100 dark:hover:bg-blue-950/60 ios-spring-button text-xs font-semibold px-3 py-1.5 transition-all cursor-pointer shadow-xs"
-            >
-              <Radio className="size-3.5 text-current" />
-              <span>เปิดโต๊ะ</span>
-            </button>
-          )
-        ) : null}
       </div>
 
       <div className="@container flex flex-col gap-2.5">

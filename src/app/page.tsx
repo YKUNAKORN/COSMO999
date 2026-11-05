@@ -2,8 +2,7 @@
 
 // Play page: set up a round, plus the roster tools for adding, editing, and
 // removing players. Ultra-Premium iOS 18 typography and frosted badges.
-import { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
+import { useState } from "react";
 import { Loader2, Plus, TriangleAlert, Users, Wifi } from "lucide-react";
 import { LatestRoundCard } from "@/components/LatestRoundCard";
 import { PlayerList } from "@/components/PlayerList";
@@ -11,37 +10,16 @@ import { PlayerModal } from "@/components/PlayerModal";
 import { RoundSetup } from "@/components/RoundSetup";
 import type { PresetTrigger } from "@/components/RoundSetup";
 import { useHistory } from "@/hooks/useHistory";
-import { useLiveSession } from "@/hooks/useLiveSession";
 import { usePlayers } from "@/hooks/usePlayers";
-import { ENABLE_LIVE_SESSION } from "@/lib/features";
 import type { Player } from "@/types/models";
-
-// Loaded only when the Live Session feature is switched on and opened.
-const LiveSessionModal = dynamic(
-  () => import("@/components/LiveSessionModal").then((m) => m.LiveSessionModal),
-  { ssr: false },
-);
 
 export default function HomePage() {
   const { players, loading, error } = usePlayers();
   const { history, loading: historyLoading } = useHistory();
-  const { session, isLive, startSession } = useLiveSession(ENABLE_LIVE_SESSION);
 
-  const [isLiveSessionOpen, setIsLiveSessionOpen] = useState(false);
   const [presetTrigger, setPresetTrigger] = useState<PresetTrigger | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
-
-  // Live round count specifically for this session
-  const liveRoundCount = useMemo(() => {
-    if (!session) return 0;
-    return history.filter((h) => h.sessionId === session.id).length;
-  }, [session, history]);
-
-  async function handleStartLiveSession() {
-    await startSession();
-    setIsLiveSessionOpen(true);
-  }
 
   function handlePlayAgain(playerIds: string[]) {
     setPresetTrigger({ ids: playerIds, timestamp: Date.now(), autoStart: true });
@@ -58,10 +36,6 @@ export default function HomePage() {
               history={history}
               loading={loading || historyLoading}
               presetTrigger={presetTrigger}
-              isLive={isLive}
-              liveRoundCount={liveRoundCount}
-              onOpenLiveSession={() => setIsLiveSessionOpen(true)}
-              onStartLiveSession={handleStartLiveSession}
             />
           </div>
         </div>
@@ -143,16 +117,6 @@ export default function HomePage() {
         onClose={() => setEditingPlayer(null)}
       />
 
-      {/* Full-Screen Dedicated Live Session View (Root Level - Spans Entire Viewport) */}
-      {ENABLE_LIVE_SESSION && isLiveSessionOpen && session && (
-        <LiveSessionModal
-          isOpen={isLiveSessionOpen}
-          session={session}
-          players={players}
-          history={history}
-          onClose={() => setIsLiveSessionOpen(false)}
-        />
-      )}
     </div>
   );
 }

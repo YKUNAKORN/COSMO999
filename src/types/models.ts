@@ -30,6 +30,8 @@ export interface HistoryEntry {
   multiplier: number;
   playerScores: Record<string, number>;
   commentary: string;
+  // Only present on old rounds recorded by the removed Live Session feature.
+  // Kept optional so existing history rows still type-check; never written now.
   sessionId?: string;
 }
 

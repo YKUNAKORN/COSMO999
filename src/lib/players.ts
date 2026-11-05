@@ -1,21 +1,32 @@
 // Player writes. dummyRoom/players is stored as a whole JSON array, exactly
-// as the legacy app writes it via playersRef.set(players). Every mutation
-// here follows the same shape: read the current array, change it in memory,
-// then set the entire path back as an array. Do NOT switch this to a keyed
-// object - the phase-2 score transaction relies on the array layout.
-import { ref, set } from "firebase/database";
-import { database, DB_PATHS, isConfigured } from "./firebase";
+// as the legacy app writes it via playersRef.set(players). Every mutation here
+// is a read-modify-write of that array. Against Firebase it runs inside a
+// transaction (updateList) so it cannot overwrite a round that was saved at the
+// same moment with a stale copy of the totals. Do NOT switch this to a keyed
+// object - the round-save transaction relies on the array layout.
+import { DB_PATHS, isConfigured } from "./firebase";
 import { getLocalPlayers, setLocalPlayers } from "./localRoom";
-import { readList } from "./rtdb";
-import { getRandomEmoji } from "./suits";
+import { updateList } from "./rtdb";
+import { getRandomEmoji, parseEmojiAvatar, parseThematicAvatar } from "./suits";
 import type { Player } from "@/types/models";
 
-export async function writeAll(players: Player[]): Promise<void> {
+async function mutatePlayers(update: (players: Player[]) => Player[]): Promise<void> {
   if (!isConfigured) {
-    await setLocalPlayers(players);
+    await setLocalPlayers(update(await getLocalPlayers()));
     return;
   }
-  await set(ref(database, DB_PATHS.players), players);
+  await updateList<Player>(DB_PATHS.players, update);
+}
+
+function hasAvatar(image: string | undefined): boolean {
+  if (!image) return false;
+  return (
+    image.startsWith("data:") ||
+    image.startsWith("http://") ||
+    image.startsWith("https://") ||
+    Boolean(parseThematicAvatar(image)) ||
+    Boolean(parseEmojiAvatar(image))
+  );
 }
 
 /**
@@ -27,24 +38,22 @@ export async function createPlayer(
   name: string,
   image?: string,
 ): Promise<string> {
-  const players = !isConfigured
-    ? await getLocalPlayers()
-    : await readList<Player>(DB_PATHS.players);
-  let finalImage = image?.trim() || "";
-  if (!finalImage) {
-    const existingImages = players.map((p) => p.image);
-    finalImage = `emoji:${getRandomEmoji(existingImages)}`;
-  }
+  const id = Date.now().toString();
+  const trimmedImage = image?.trim() || "";
 
-  const newPlayer: Player = {
-    id: Date.now().toString(),
-    name: name.trim(),
-    image: finalImage,
-    totalScore: 0,
-    latestScore: null,
-  };
-  await writeAll([...players, newPlayer]);
-  return newPlayer.id;
+  await mutatePlayers((players) => {
+    const finalImage =
+      trimmedImage || `emoji:${getRandomEmoji(players.map((p) => p.image))}`;
+    const newPlayer: Player = {
+      id,
+      name: name.trim(),
+      image: finalImage,
+      totalScore: 0,
+      latestScore: null,
+    };
+    return [...players, newPlayer];
+  });
+  return id;
 }
 
 /**
@@ -55,29 +64,41 @@ export async function updatePlayer(
   id: string,
   changes: { name?: string; image?: string },
 ): Promise<void> {
-  const players = !isConfigured
-    ? await getLocalPlayers()
-    : await readList<Player>(DB_PATHS.players);
-  const next = players.map((player) => {
-    if (player.id !== id) return player;
-    let newImage = changes.image !== undefined ? changes.image : player.image;
-    if (!newImage || newImage.trim() === "") {
-      const otherImages = players.filter((p) => p.id !== id).map((p) => p.image);
-      newImage = `emoji:${getRandomEmoji(otherImages)}`;
-    }
-    return {
-      ...player,
-      ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
-      image: newImage,
-    };
-  });
-  await writeAll(next);
+  await mutatePlayers((players) =>
+    players.map((player) => {
+      if (player.id !== id) return player;
+      let newImage = changes.image !== undefined ? changes.image : player.image;
+      if (!newImage || newImage.trim() === "") {
+        const otherImages = players.filter((p) => p.id !== id).map((p) => p.image);
+        newImage = `emoji:${getRandomEmoji(otherImages)}`;
+      }
+      return {
+        ...player,
+        ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
+        image: newImage,
+      };
+    }),
+  );
 }
 
 /** Remove a player from the array. */
 export async function deletePlayer(id: string): Promise<void> {
-  const players = !isConfigured
-    ? await getLocalPlayers()
-    : await readList<Player>(DB_PATHS.players);
-  await writeAll(players.filter((player) => player.id !== id));
+  await mutatePlayers((players) => players.filter((player) => player.id !== id));
+}
+
+/**
+ * Give every legacy player who has no photo / suit / emoji a random emoji.
+ * Only the `image` of those players changes, and it runs in a transaction, so
+ * scores written meanwhile are never rolled back.
+ */
+export async function fillMissingAvatars(): Promise<void> {
+  await mutatePlayers((players) => {
+    const used = players.map((p) => p.image);
+    return players.map((player) => {
+      if (hasAvatar(player.image)) return player;
+      const token = `emoji:${getRandomEmoji(used)}`;
+      used.push(token);
+      return { ...player, image: token };
+    });
+  });
 }

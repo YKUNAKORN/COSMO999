@@ -1,22 +1,21 @@
 // Group writes. dummyRoom/groups is stored as a whole JSON array, exactly
-// as the legacy app writes it via saveGroupsData() which called
-// db.ref('dummyRoom/groups').set(groups). Every mutation here follows the
-// same read-modify-write-array pattern used in players.ts.
+// as the legacy app writes it via saveGroupsData(). Against Firebase every
+// mutation runs in a transaction (updateList) so it cannot overwrite a round
+// that was saved at the same moment with stale group scores.
 // History entries that reference these groups are NOT touched - per legacy
 // behaviour, deleting a group shortcut only removes the groups entry, not
 // the history records that mention it.
-import { ref, set } from "firebase/database";
-import { database, DB_PATHS, isConfigured } from "./firebase";
+import { DB_PATHS, isConfigured } from "./firebase";
 import { getLocalGroups, setLocalGroups } from "./localRoom";
-import { readList } from "./rtdb";
+import { updateList } from "./rtdb";
 import type { Group } from "@/types/models";
 
-async function writeAll(groups: Group[]): Promise<void> {
+async function mutateGroups(update: (groups: Group[]) => Group[]): Promise<void> {
   if (!isConfigured) {
-    await setLocalGroups(groups);
+    await setLocalGroups(update(await getLocalGroups()));
     return;
   }
-  await set(ref(database, DB_PATHS.groups), groups);
+  await updateList<Group>(DB_PATHS.groups, update);
 }
 
 /**
@@ -25,23 +24,16 @@ async function writeAll(groups: Group[]): Promise<void> {
  * display an inline error.
  */
 export async function renameGroup(groupId: string, newName: string): Promise<void> {
-  const groups = !isConfigured
-    ? await getLocalGroups()
-    : await readList<Group>(DB_PATHS.groups);
-  const next = groups.map((g) =>
-    g.id === groupId ? { ...g, name: newName.trim() } : g,
+  await mutateGroups((groups) =>
+    groups.map((g) => (g.id === groupId ? { ...g, name: newName.trim() } : g)),
   );
-  await writeAll(next);
 }
 
 /**
- * Delete a group shortcut. Removes the entry from the groups array and
- * writes the remaining array back. History entries that mention this group
- * id are preserved - the legacy app does the same.
+ * Delete a group shortcut. Removes the entry from the groups array. History
+ * entries that mention this group id are preserved - the legacy app does the
+ * same.
  */
 export async function deleteGroup(groupId: string): Promise<void> {
-  const groups = !isConfigured
-    ? await getLocalGroups()
-    : await readList<Group>(DB_PATHS.groups);
-  await writeAll(groups.filter((g) => g.id !== groupId));
+  await mutateGroups((groups) => groups.filter((g) => g.id !== groupId));
 }

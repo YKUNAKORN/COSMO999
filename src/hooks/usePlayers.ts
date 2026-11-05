@@ -8,7 +8,7 @@ import {
   initializeLocalRoom,
   subscribeToLocalRoom,
 } from "@/lib/localRoom";
-import { writeAll } from "@/lib/players";
+import { fillMissingAvatars } from "@/lib/players";
 import { subscribeToList } from "@/lib/rtdb";
 import {
   parseThematicAvatar,
@@ -77,7 +77,9 @@ export function usePlayers(): {
         });
 
         if (needsSync) {
-          writeAll(normalized).catch(() => {});
+          fillMissingAvatars().catch((err) =>
+            console.error("[players] avatar migration failed", err),
+          );
         }
 
         setPlayers(normalized);

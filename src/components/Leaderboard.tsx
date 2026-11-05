@@ -525,8 +525,14 @@ export function Leaderboard() {
   const error = playersError ?? historyError;
 
   const [activeTab, setActiveTab] = useState<LeaderboardTab>("ranking");
-  const [viewKey, setViewKey] = useState<string>(() => getCurrentPeriod().key);
+  // "current" is a sentinel, not a period key, so the "this period" view keeps
+  // following the real current period if the page stays open across the 1st /
+  // 16th rollover instead of freezing on the period it was opened in.
+  const [selectedView, setSelectedView] = useState<string>("current");
   const currentPeriod = getCurrentPeriod();
+  const viewKey = selectedView === "current" ? currentPeriod.key : selectedView;
+  const setViewKey = (key: string) =>
+    setSelectedView(key === currentPeriod.key ? "current" : key);
 
   const periodsInHistory = useMemo(
     () => listPeriodsInHistory(history),
